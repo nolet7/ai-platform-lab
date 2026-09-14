@@ -1,0 +1,25 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: platform-smoke-test-prod
+  namespace: argocd
+
+spec:
+  project: ai-platform-prod
+
+  source:
+    repoURL: https://github.com/nolet7/ai-platform-lab.git
+    targetRevision: main
+    path: gitops/workloads/platform-smoke-test-v2/overlays/prod
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: ai-platform-prod
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+
+    syncOptions:
+      - CreateNamespace=false
