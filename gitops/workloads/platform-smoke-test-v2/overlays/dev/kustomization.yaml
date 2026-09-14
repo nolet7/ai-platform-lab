@@ -15,3 +15,8 @@ replicas:
 labels:
   - pairs:
       platform.example.com/environment: dev
+
+images:
+  - name: nginx
+    newName: nginx
+    newTag: 1.31.5-alpine3.24
