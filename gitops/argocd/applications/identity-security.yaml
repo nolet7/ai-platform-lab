@@ -1,0 +1,25 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: identity-security
+  namespace: argocd
+
+spec:
+  project: ai-platform-security
+
+  source:
+    repoURL: https://github.com/nolet7/ai-platform-lab.git
+    targetRevision: main
+    path: gitops/security/identity
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: security
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+
+    syncOptions:
+      - CreateNamespace=false
