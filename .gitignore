@@ -1,0 +1,36 @@
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+
+# Secrets
+.env
+.env.*
+*.pem
+*.key
+*.secret
+secrets/
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# Kubernetes secrets
+*-secret.yaml
+*-secrets.yaml
+
+# VM images
+*.vhd
+*.vhdx
+*.iso
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+Thumbs.db
+.DS_Store
