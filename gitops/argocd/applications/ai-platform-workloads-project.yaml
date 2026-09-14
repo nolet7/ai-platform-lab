@@ -3,6 +3,8 @@ kind: AppProject
 metadata:
   name: ai-platform-workloads
   namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
 
 spec:
   description: Restricted project for AI Platform application workloads
