@@ -34,3 +34,16 @@ __pycache__/
 # OS
 Thumbs.db
 .DS_Store
+
+# Terraform runtime files
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+crash.*.log
+
+# Secrets
+.env
+*.pem
+*.key

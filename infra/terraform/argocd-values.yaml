@@ -1,0 +1,33 @@
+# Argo CD configuration for the local AI Platform lab.
+#
+# Phase 2 uses Argo CD as the GitOps deployment engine.
+# Applications will eventually be created through the AI Platform
+# control plane rather than by users running kubectl directly.
+
+global:
+  domain: argocd.localhost
+
+configs:
+  cm:
+    admin.enabled: true
+
+server:
+  replicas: 1
+
+  service:
+    type: ClusterIP
+
+controller:
+  replicas: 1
+
+repoServer:
+  replicas: 1
+
+applicationSet:
+  replicas: 1
+
+redis:
+  enabled: true
+
+notifications:
+  enabled: true
