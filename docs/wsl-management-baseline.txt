@@ -1,0 +1,44 @@
+=== DATE ===
+Mon Sep 14 00:03:43 EDT 2026
+
+=== OS ===
+PRETTY_NAME="Ubuntu 26.04.1 LTS"
+NAME="Ubuntu"
+VERSION_ID="26.04"
+VERSION="26.04.1 LTS (Resolute Raccoon)"
+VERSION_CODENAME=resolute
+ID=ubuntu
+ID_LIKE=debian
+HOME_URL="https://www.ubuntu.com/"
+SUPPORT_URL="https://help.ubuntu.com/"
+BUG_REPORT_URL="https://bugs.launchpad.net/ubuntu/"
+PRIVACY_POLICY_URL="https://www.ubuntu.com/legal/terms-and-policies/privacy-policy"
+UBUNTU_CODENAME=resolute
+LOGO=ubuntu-logo
+
+=== KERNEL ===
+Linux Dell-128 6.18.33.2-microsoft-standard-WSL2 #1 SMP PREEMPT_DYNAMIC Thu Jun 18 21:54:43 UTC 2026 x86_64 GNU/Linux
+
+=== USER ===
+lateef
+
+=== CPU ===
+28
+
+=== MEMORY ===
+               total        used        free      shared  buff/cache   available
+Mem:            62Gi       1.1Gi        61Gi       3.5Mi       287Mi        61Gi
+Swap:           16Gi          0B        16Gi
+
+=== STORAGE ===
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/sdd       1007G  2.3G  954G   1% /
+
+=== GIT ===
+git version 2.53.0
+
+=== PYTHON ===
+Python 3.14.4
+
+=== ANSIBLE ===
+ansible [core 2.21.4]
