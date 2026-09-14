@@ -1,0 +1,94 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: ai-platform-dev
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+
+spec:
+  description: Development AI Platform workloads
+
+  sourceRepos:
+    - https://github.com/nolet7/ai-platform-lab.git
+
+  destinations:
+    - namespace: ai-platform-dev
+      server: https://kubernetes.default.svc
+
+  namespaceResourceWhitelist:
+    - group: apps
+      kind: Deployment
+    - group: apps
+      kind: StatefulSet
+    - group: ""
+      kind: Service
+    - group: ""
+      kind: ConfigMap
+
+  orphanedResources:
+    warn: true
+
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: ai-platform-staging
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+
+spec:
+  description: Staging AI Platform workloads
+
+  sourceRepos:
+    - https://github.com/nolet7/ai-platform-lab.git
+
+  destinations:
+    - namespace: ai-platform-staging
+      server: https://kubernetes.default.svc
+
+  namespaceResourceWhitelist:
+    - group: apps
+      kind: Deployment
+    - group: apps
+      kind: StatefulSet
+    - group: ""
+      kind: Service
+    - group: ""
+      kind: ConfigMap
+
+  orphanedResources:
+    warn: true
+
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: ai-platform-prod
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+
+spec:
+  description: Production AI Platform workloads
+
+  sourceRepos:
+    - https://github.com/nolet7/ai-platform-lab.git
+
+  destinations:
+    - namespace: ai-platform-prod
+      server: https://kubernetes.default.svc
+
+  namespaceResourceWhitelist:
+    - group: apps
+      kind: Deployment
+    - group: apps
+      kind: StatefulSet
+    - group: ""
+      kind: Service
+    - group: ""
+      kind: ConfigMap
+
+  orphanedResources:
+    warn: true

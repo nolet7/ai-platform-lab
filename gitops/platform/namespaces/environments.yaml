@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ai-platform-dev
+  labels:
+    platform.example.com/environment: dev
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ai-platform-staging
+  labels:
+    platform.example.com/environment: staging
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ai-platform-prod
+  labels:
+    platform.example.com/environment: prod
