@@ -56,3 +56,10 @@ __pycache__/
 *.pyo
 .pytest_cache/
 .mypy_cache/
+
+# Keycloak runtime/security artifacts
+security/keycloak/.env
+security/keycloak/.env.*
+security/keycloak/runtime/
+security/keycloak/*.secret
+security/keycloak/*.token

@@ -1,0 +1,8 @@
+*.secret
+*.token
+.env
+.env.*
+client-secret.txt
+access-token.txt
+token.json
+runtime/
