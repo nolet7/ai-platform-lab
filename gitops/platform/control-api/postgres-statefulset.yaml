@@ -22,17 +22,21 @@ spec:
 
       securityContext:
         runAsNonRoot: true
-        fsGroup: 999
+        runAsUser: 70
+        runAsGroup: 70
+        fsGroup: 70
         seccompProfile:
           type: RuntimeDefault
 
       containers:
         - name: postgres
           image: postgres:17-alpine
+          imagePullPolicy: IfNotPresent
 
           ports:
             - name: postgres
               containerPort: 5432
+              protocol: TCP
 
           envFrom:
             - secretRef:
@@ -40,6 +44,10 @@ spec:
 
           securityContext:
             allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 70
+            runAsGroup: 70
+
             capabilities:
               drop:
                 - ALL
@@ -50,6 +58,7 @@ spec:
                 - sh
                 - -c
                 - pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"
+
             initialDelaySeconds: 5
             periodSeconds: 5
             timeoutSeconds: 3
@@ -61,6 +70,7 @@ spec:
                 - sh
                 - -c
                 - pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"
+
             initialDelaySeconds: 20
             periodSeconds: 10
             timeoutSeconds: 3
