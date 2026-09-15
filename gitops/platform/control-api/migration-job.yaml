@@ -1,0 +1,70 @@
+apiVersion: batch/v1
+kind: Job
+
+metadata:
+  name: platform-api-db-migrate
+
+  annotations:
+    argocd.argoproj.io/hook: PreSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
+
+spec:
+  backoffLimit: 3
+
+  template:
+    metadata:
+      labels:
+        app: platform-api-migration
+
+    spec:
+      restartPolicy: Never
+      serviceAccountName: platform-api
+      automountServiceAccountToken: false
+
+      securityContext:
+        runAsNonRoot: true
+
+        seccompProfile:
+          type: RuntimeDefault
+
+      containers:
+        - name: migrate
+          image: ai-platform-api:0.2.0
+          imagePullPolicy: IfNotPresent
+
+          command:
+            - alembic
+            - -c
+            - /app/alembic.ini
+            - upgrade
+            - head
+
+          envFrom:
+            - secretRef:
+                name: platform-db-secret
+
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+
+            capabilities:
+              drop:
+                - ALL
+
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+
+            limits:
+              cpu: 250m
+              memory: 256Mi
+
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+
+      volumes:
+        - name: tmp
+          emptyDir: {}
