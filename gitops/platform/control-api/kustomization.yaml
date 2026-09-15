@@ -9,9 +9,13 @@ resources:
   - deployment.yaml
   - service.yaml
   - networkpolicy.yaml
+
   - postgres-service.yaml
   - postgres-statefulset.yaml
   - postgres-networkpolicy.yaml
+
+  - migration-networkpolicy.yaml
+  - migration-job.yaml
 
 labels:
   - pairs:
