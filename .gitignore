@@ -63,3 +63,23 @@ security/keycloak/.env.*
 security/keycloak/runtime/
 security/keycloak/*.secret
 security/keycloak/*.token
+
+# Runtime secrets
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.p12
+*.pfx
+*.token
+*.secret
+access-token*
+client-secret*
+token.json
+
+# Runtime/cache
+**/__pycache__/
+**/.pytest_cache/
+**/.venv/
+security/keycloak/runtime/

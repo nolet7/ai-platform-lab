@@ -1,0 +1,25 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+
+metadata:
+  name: ai-platform-api
+  namespace: ai-platform
+
+  labels:
+    release: kube-prometheus-stack
+    app.kubernetes.io/name: ai-platform-api
+
+spec:
+  namespaceSelector:
+    matchNames:
+      - ai-platform
+
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: ai-platform-api
+
+  endpoints:
+    - port: metrics
+      path: /metrics
+      interval: 15s
+      scrapeTimeout: 5s

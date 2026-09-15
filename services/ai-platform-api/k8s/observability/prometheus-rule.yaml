@@ -1,0 +1,149 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+
+metadata:
+  name: ai-platform-api
+  namespace: ai-platform
+
+  labels:
+    release: kube-prometheus-stack
+    app.kubernetes.io/name: ai-platform-api
+
+spec:
+  groups:
+
+    - name: ai-platform-api.rules
+
+      rules:
+
+        - alert: AIPlatformAPIDown
+
+          expr: |
+            absent(
+              up{
+                namespace="ai-platform",
+                service="ai-platform-api"
+              }
+            )
+            or
+            sum(
+              up{
+                namespace="ai-platform",
+                service="ai-platform-api"
+              }
+            ) == 0
+
+          for: 2m
+
+          labels:
+            severity: critical
+            service: ai-platform-api
+
+          annotations:
+            summary: "AI Platform API is unavailable"
+            description: "Prometheus cannot scrape any AI Platform API metrics endpoint."
+
+
+        - alert: AIPlatformAPIHighErrorRate
+
+          expr: |
+            (
+              sum(
+                rate(
+                  ai_platform_http_requests_total{
+                    namespace="ai-platform",
+                    status_code=~"5.."
+                  }[5m]
+                )
+              )
+              /
+              clamp_min(
+                sum(
+                  rate(
+                    ai_platform_http_requests_total{
+                      namespace="ai-platform"
+                    }[5m]
+                  )
+                ),
+                0.001
+              )
+            ) > 0.05
+
+          for: 5m
+
+          labels:
+            severity: warning
+            service: ai-platform-api
+
+          annotations:
+            summary: "AI Platform API 5xx error rate is high"
+            description: "More than 5% of requests are returning HTTP 5xx."
+
+
+        - alert: AIPlatformAPIHighLatencyP95
+
+          expr: |
+            histogram_quantile(
+              0.95,
+              sum by (le) (
+                rate(
+                  ai_platform_http_request_duration_seconds_bucket{
+                    namespace="ai-platform"
+                  }[5m]
+                )
+              )
+            ) > 1
+
+          for: 5m
+
+          labels:
+            severity: warning
+            service: ai-platform-api
+
+          annotations:
+            summary: "AI Platform API p95 latency is high"
+            description: "p95 API latency is above 1 second."
+
+
+        - alert: AIPlatformAuthenticationFailures
+
+          expr: |
+            sum(
+              increase(
+                ai_platform_auth_failures_total{
+                  namespace="ai-platform"
+                }[5m]
+              )
+            ) > 10
+
+          for: 2m
+
+          labels:
+            severity: warning
+            service: ai-platform-api
+
+          annotations:
+            summary: "Elevated authentication failures"
+            description: "More than 10 authentication failures occurred within five minutes."
+
+
+        - alert: AIPlatformRBACDenials
+
+          expr: |
+            sum(
+              increase(
+                ai_platform_rbac_denials_total{
+                  namespace="ai-platform"
+                }[5m]
+              )
+            ) > 5
+
+          for: 2m
+
+          labels:
+            severity: warning
+            service: ai-platform-api
+
+          annotations:
+            summary: "Elevated AI Platform RBAC denials"
+            description: "More than five RBAC authorization failures occurred within five minutes."
