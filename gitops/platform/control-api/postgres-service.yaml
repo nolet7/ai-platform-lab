@@ -3,6 +3,9 @@ kind: Service
 metadata:
   name: platform-postgres
 
+  annotations:
+    argocd.argoproj.io/sync-wave: "-3"
+
 spec:
   clusterIP: None
 

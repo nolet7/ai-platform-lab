@@ -4,6 +4,9 @@ kind: NetworkPolicy
 metadata:
   name: platform-api-migration
 
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+
 spec:
   podSelector:
     matchLabels:

@@ -4,6 +4,9 @@ kind: StatefulSet
 metadata:
   name: platform-postgres
 
+  annotations:
+    argocd.argoproj.io/sync-wave: "-3"
+
 spec:
   serviceName: platform-postgres
   replicas: 1

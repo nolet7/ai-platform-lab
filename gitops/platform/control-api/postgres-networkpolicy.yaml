@@ -4,6 +4,9 @@ kind: NetworkPolicy
 metadata:
   name: platform-postgres
 
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+
 spec:
   podSelector:
     matchLabels:
@@ -15,8 +18,12 @@ spec:
   ingress:
     - from:
         - podSelector:
-            matchLabels:
-              app: platform-api
+            matchExpressions:
+              - key: app
+                operator: In
+                values:
+                  - platform-api
+                  - platform-api-migration
 
       ports:
         - protocol: TCP
