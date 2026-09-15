@@ -1,0 +1,37 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+
+metadata:
+  name: ai-platform-control-plane
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+
+spec:
+  description: AI Platform control-plane services
+
+  sourceRepos:
+    - https://github.com/nolet7/ai-platform-lab.git
+
+  destinations:
+    - namespace: ai-platform
+      server: https://kubernetes.default.svc
+
+  namespaceResourceWhitelist:
+    - group: apps
+      kind: Deployment
+
+    - group: ""
+      kind: Service
+
+    - group: ""
+      kind: ConfigMap
+
+    - group: ""
+      kind: ServiceAccount
+
+    - group: networking.k8s.io
+      kind: NetworkPolicy
+
+  orphanedResources:
+    warn: true

@@ -47,3 +47,12 @@ crash.*.log
 .env
 *.pem
 *.key
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.mypy_cache/
