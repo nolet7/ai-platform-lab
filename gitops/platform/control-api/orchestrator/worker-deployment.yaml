@@ -2,24 +2,25 @@ apiVersion: apps/v1
 kind: Deployment
 
 metadata:
-  name: platform-api
+  name: deployment-worker
 
 spec:
   replicas: 2
-  revisionHistoryLimit: 3
 
   selector:
     matchLabels:
-      app: platform-api
+      app: deployment-worker
 
   template:
     metadata:
       labels:
-        app: platform-api
+        app: deployment-worker
 
     spec:
-      serviceAccountName: platform-api
+      serviceAccountName: deployment-orchestrator
       automountServiceAccountToken: false
+
+      terminationGracePeriodSeconds: 30
 
       securityContext:
         runAsNonRoot: true
@@ -28,21 +29,24 @@ spec:
           type: RuntimeDefault
 
       containers:
-        - name: platform-api
-          image: ai-platform-api:0.4.0
+        - name: worker
+          image: ai-platform-deployment-worker:0.1.0
           imagePullPolicy: IfNotPresent
 
-          ports:
-            - name: http
-              containerPort: 8000
-              protocol: TCP
+          command:
+            - python
+            - -m
+            - app.worker
 
           envFrom:
             - configMapRef:
-                name: platform-api-config
+                name: deployment-orchestrator-config
 
             - secretRef:
                 name: platform-db-secret
+
+            - secretRef:
+                name: platform-queue-secret
 
           securityContext:
             allowPrivilegeEscalation: false
@@ -52,26 +56,6 @@ spec:
             capabilities:
               drop:
                 - ALL
-
-          readinessProbe:
-            httpGet:
-              path: /health/ready
-              port: http
-
-            initialDelaySeconds: 3
-            periodSeconds: 5
-            timeoutSeconds: 2
-            failureThreshold: 6
-
-          livenessProbe:
-            httpGet:
-              path: /health/live
-              port: http
-
-            initialDelaySeconds: 10
-            periodSeconds: 10
-            timeoutSeconds: 2
-            failureThreshold: 3
 
           resources:
             requests:

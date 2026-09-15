@@ -2,15 +2,12 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 
 metadata:
-  name: platform-postgres
-
-  annotations:
-    argocd.argoproj.io/sync-wave: "-2"
+  name: platform-redis
 
 spec:
   podSelector:
     matchLabels:
-      app: platform-postgres
+      app: platform-redis
 
   policyTypes:
     - Ingress
@@ -22,11 +19,9 @@ spec:
               - key: app
                 operator: In
                 values:
-                  - platform-api
-                  - platform-api-migration
                   - deployment-dispatcher
                   - deployment-worker
 
       ports:
         - protocol: TCP
-          port: 5432
+          port: 6379

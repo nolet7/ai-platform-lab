@@ -42,7 +42,7 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="AI Platform Control API",
-    version="0.3.0",
+    version="0.4.0",
     description=(
         "Enterprise control API for AI/ML deployments"
     ),
@@ -52,11 +52,18 @@ app = FastAPI(
 def deployment_response(
     deployment,
 ) -> DeploymentStatus:
+
     return DeploymentStatus(
         request_id=str(
             deployment.request_id
         ),
         status=deployment.status,
+        execution_status=(
+            deployment.execution_status
+        ),
+        execution_message=(
+            deployment.execution_message
+        ),
         tenant_id=deployment.tenant_id,
         model_name=deployment.model_name,
         model_version=deployment.model_version,
@@ -133,7 +140,7 @@ def health_ready():
         )
 
         raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            status_code=503,
             detail={
                 "status": "not-ready",
                 "database": "unavailable",
@@ -178,14 +185,8 @@ def create_deployment(
         != principal.tenant_id
     ):
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail={
-                "message": "Tenant access denied",
-                "token_tenant": principal.tenant_id,
-                "requested_tenant": (
-                    request.tenant_id
-                ),
-            },
+            status_code=403,
+            detail="Tenant access denied",
         )
 
     try:
@@ -199,19 +200,12 @@ def create_deployment(
 
     except SQLAlchemyError:
         logger.exception(
-            "Failed to persist deployment request"
+            "Deployment creation failed"
         )
 
         raise HTTPException(
-            status_code=(
-                status.HTTP_503_SERVICE_UNAVAILABLE
-            ),
-            detail={
-                "message": (
-                    "Control-plane database "
-                    "unavailable"
-                )
-            },
+            status_code=503,
+            detail="Database unavailable",
         )
 
     return DeploymentAccepted(
@@ -219,6 +213,9 @@ def create_deployment(
             deployment.request_id
         ),
         status=deployment.status,
+        execution_status=(
+            deployment.execution_status
+        ),
         tenant_id=deployment.tenant_id,
         model_name=deployment.model_name,
         model_version=deployment.model_version,
@@ -262,10 +259,6 @@ def submit_deployment(
         translate_workflow_error(error)
 
     except SQLAlchemyError:
-        logger.exception(
-            "Submission transaction failed"
-        )
-
         raise HTTPException(
             status_code=503,
             detail="Database unavailable",
@@ -309,10 +302,6 @@ def approval_decision(
         translate_workflow_error(error)
 
     except SQLAlchemyError:
-        logger.exception(
-            "Approval transaction failed"
-        )
-
         raise HTTPException(
             status_code=503,
             detail="Database unavailable",

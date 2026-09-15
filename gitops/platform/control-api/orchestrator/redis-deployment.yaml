@@ -1,0 +1,109 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: platform-redis
+
+spec:
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app: platform-redis
+
+  template:
+    metadata:
+      labels:
+        app: platform-redis
+
+    spec:
+      automountServiceAccountToken: false
+
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+        runAsGroup: 999
+
+        seccompProfile:
+          type: RuntimeDefault
+
+      containers:
+        - name: redis
+          image: redis:7.4-alpine
+          imagePullPolicy: IfNotPresent
+
+          command:
+            - /bin/sh
+            - -c
+
+          args:
+            - |
+              exec redis-server \
+                --bind 0.0.0.0 \
+                --protected-mode yes \
+                --save "" \
+                --appendonly no \
+                --dir /tmp \
+                --requirepass "$REDIS_PASSWORD"
+
+          env:
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: platform-queue-secret
+                  key: REDIS_PASSWORD
+
+            - name: REDISCLI_AUTH
+              valueFrom:
+                secretKeyRef:
+                  name: platform-queue-secret
+                  key: REDIS_PASSWORD
+
+          ports:
+            - name: redis
+              containerPort: 6379
+
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+
+            capabilities:
+              drop:
+                - ALL
+
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - redis-cli ping | grep -q PONG
+
+            initialDelaySeconds: 3
+            periodSeconds: 5
+
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - redis-cli ping | grep -q PONG
+
+            initialDelaySeconds: 10
+            periodSeconds: 10
+
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+
+            limits:
+              cpu: 250m
+              memory: 256Mi
+
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+
+      volumes:
+        - name: tmp
+          emptyDir: {}

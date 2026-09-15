@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from .db_models import (
     AuditEventRecord,
+    DeploymentJobRecord,
     DeploymentRequestRecord,
 )
 from .models import (
@@ -97,6 +98,7 @@ def create_deployment_with_audit(
         status="accepted",
         requested_by=principal.username,
         requested_by_sub=principal.subject,
+        execution_status="not_started",
     )
 
     try:
@@ -238,6 +240,46 @@ def decide_deployment(
                 "reason": decision.reason,
             },
         )
+
+        if decision.decision == "approved":
+            deployment.execution_status = "queued"
+            deployment.execution_message = (
+                "Approved and queued for "
+                "deployment orchestration"
+            )
+
+            job = DeploymentJobRecord(
+                job_id=uuid4(),
+                request_id=deployment.request_id,
+                queue_name="deployments",
+                status="queued",
+                attempt_count=0,
+                max_attempts=3,
+            )
+
+            db.add(job)
+
+            _audit(
+                db=db,
+                deployment=deployment,
+                principal=principal,
+                event_type=(
+                    "deployment.execution.queued"
+                ),
+                event_data={
+                    "execution_status": "queued",
+                    "queue_name": "deployments",
+                    "job_id": str(job.job_id),
+                },
+            )
+
+        else:
+            deployment.execution_status = (
+                "not_started"
+            )
+            deployment.execution_message = (
+                "Deployment rejected before execution"
+            )
 
         db.commit()
         db.refresh(deployment)

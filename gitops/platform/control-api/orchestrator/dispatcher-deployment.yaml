@@ -1,26 +1,23 @@
-apiVersion: batch/v1
-kind: Job
+apiVersion: apps/v1
+kind: Deployment
 
 metadata:
-  name: platform-api-db-migrate
-
-  annotations:
-    argocd.argoproj.io/hook: Sync
-    argocd.argoproj.io/sync-wave: "-1"
-    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
+  name: deployment-dispatcher
 
 spec:
-  backoffLimit: 3
-  activeDeadlineSeconds: 180
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app: deployment-dispatcher
 
   template:
     metadata:
       labels:
-        app: platform-api-migration
+        app: deployment-dispatcher
 
     spec:
-      restartPolicy: Never
-      serviceAccountName: platform-api
+      serviceAccountName: deployment-orchestrator
       automountServiceAccountToken: false
 
       securityContext:
@@ -30,20 +27,24 @@ spec:
           type: RuntimeDefault
 
       containers:
-        - name: migrate
-          image: ai-platform-api:0.4.0
+        - name: dispatcher
+          image: ai-platform-deployment-worker:0.1.0
           imagePullPolicy: IfNotPresent
 
           command:
-            - alembic
-            - -c
-            - /app/alembic.ini
-            - upgrade
-            - head
+            - python
+            - -m
+            - app.dispatcher
 
           envFrom:
+            - configMapRef:
+                name: deployment-orchestrator-config
+
             - secretRef:
                 name: platform-db-secret
+
+            - secretRef:
+                name: platform-queue-secret
 
           securityContext:
             allowPrivilegeEscalation: false

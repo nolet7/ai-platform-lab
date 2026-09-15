@@ -6,17 +6,14 @@ from pydantic import BaseModel, Field
 class DeploymentRequest(BaseModel):
     tenant_id: str = Field(
         min_length=1,
-        description="Tenant that owns the requested deployment",
     )
 
     model_name: str = Field(
         min_length=1,
-        description="Logical model name",
     )
 
     model_version: str = Field(
         min_length=1,
-        description="Model version or release identifier",
     )
 
     environment: Literal[
@@ -29,6 +26,7 @@ class DeploymentRequest(BaseModel):
 class DeploymentAccepted(BaseModel):
     request_id: str
     status: str
+    execution_status: str
     tenant_id: str
     model_name: str
     model_version: str
@@ -51,6 +49,8 @@ class ApprovalDecision(BaseModel):
 class DeploymentStatus(BaseModel):
     request_id: str
     status: str
+    execution_status: str
+    execution_message: str | None = None
     tenant_id: str
     model_name: str
     model_version: str

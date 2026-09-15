@@ -3,10 +3,8 @@ from uuid import UUID
 
 from sqlalchemy import (
     DateTime,
-    ForeignKey,
     Integer,
     String,
-    func,
 )
 from sqlalchemy.dialects.postgresql import (
     JSONB,
@@ -33,78 +31,31 @@ class DeploymentRequestRecord(Base):
 
     tenant_id: Mapped[str] = mapped_column(
         String(128),
-        nullable=False,
-        index=True,
     )
 
     model_name: Mapped[str] = mapped_column(
         String(255),
-        nullable=False,
     )
 
     model_version: Mapped[str] = mapped_column(
         String(128),
-        nullable=False,
     )
 
     environment: Mapped[str] = mapped_column(
         String(32),
-        nullable=False,
     )
 
     status: Mapped[str] = mapped_column(
         String(32),
-        nullable=False,
-        index=True,
-    )
-
-    requested_by: Mapped[str] = mapped_column(
-        String(255),
-        nullable=False,
-    )
-
-    requested_by_sub: Mapped[str | None] = mapped_column(
-        String(255),
-        nullable=True,
-    )
-
-    decision_by: Mapped[str | None] = mapped_column(
-        String(255),
-        nullable=True,
-    )
-
-    decision_by_sub: Mapped[str | None] = mapped_column(
-        String(255),
-        nullable=True,
-    )
-
-    decision_reason: Mapped[str | None] = mapped_column(
-        String(1000),
-        nullable=True,
     )
 
     execution_status: Mapped[str] = mapped_column(
         String(32),
-        nullable=False,
-        default="not_started",
-        server_default="not_started",
     )
 
     execution_message: Mapped[str | None] = mapped_column(
         String(1000),
         nullable=True,
-    )
-
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        nullable=False,
-        server_default=func.now(),
-    )
-
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        nullable=False,
-        server_default=func.now(),
     )
 
 
@@ -118,36 +69,23 @@ class DeploymentJobRecord(Base):
 
     request_id: Mapped[UUID] = mapped_column(
         PG_UUID(as_uuid=True),
-        ForeignKey(
-            "deployment_requests.request_id",
-            ondelete="RESTRICT",
-        ),
         unique=True,
-        nullable=False,
     )
 
     queue_name: Mapped[str] = mapped_column(
         String(64),
-        nullable=False,
-        default="deployments",
     )
 
     status: Mapped[str] = mapped_column(
         String(32),
-        nullable=False,
-        index=True,
     )
 
     attempt_count: Mapped[int] = mapped_column(
         Integer,
-        nullable=False,
-        default=0,
     )
 
     max_attempts: Mapped[int] = mapped_column(
         Integer,
-        nullable=False,
-        default=3,
     )
 
     last_error: Mapped[str | None] = mapped_column(
@@ -177,14 +115,10 @@ class DeploymentJobRecord(Base):
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        nullable=False,
-        server_default=func.now(),
     )
 
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        nullable=False,
-        server_default=func.now(),
     )
 
 
@@ -198,37 +132,24 @@ class AuditEventRecord(Base):
 
     request_id: Mapped[UUID] = mapped_column(
         PG_UUID(as_uuid=True),
-        ForeignKey(
-            "deployment_requests.request_id",
-            ondelete="RESTRICT",
-        ),
-        nullable=False,
-        index=True,
     )
 
     event_type: Mapped[str] = mapped_column(
         String(128),
-        nullable=False,
     )
 
     actor: Mapped[str] = mapped_column(
         String(255),
-        nullable=False,
     )
 
     tenant_id: Mapped[str] = mapped_column(
         String(128),
-        nullable=False,
-        index=True,
     )
 
     event_data: Mapped[dict] = mapped_column(
         JSONB,
-        nullable=False,
     )
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        nullable=False,
-        server_default=func.now(),
     )

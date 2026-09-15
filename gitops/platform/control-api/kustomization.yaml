@@ -17,6 +17,8 @@ resources:
   - migration-networkpolicy.yaml
   - migration-job.yaml
 
+  - orchestrator
+
 labels:
   - pairs:
       app.kubernetes.io/part-of: ai-platform-control-plane
