@@ -1,8 +1,17 @@
 from uuid import uuid4
 
-from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi import (
+    Depends,
+    FastAPI,
+    HTTPException,
+    status,
+)
 
-from .models import DeploymentAccepted, DeploymentRequest
+from .models import (
+    DeploymentAccepted,
+    DeploymentRequest,
+)
+
 from .security import (
     Principal,
     get_current_principal,
@@ -12,19 +21,30 @@ from .security import (
 
 app = FastAPI(
     title="AI Platform Control API",
-    version="0.1.0",
+    version="0.1.1",
     description="Enterprise control API for AI/ML deployments",
 )
 
 
 @app.get("/health/live")
 async def health_live():
-    return {"status": "healthy"}
+    return {
+        "status": "healthy"
+    }
+
+
+@app.get("/health/ready")
+async def health_ready():
+    return {
+        "status": "ready"
+    }
 
 
 @app.get("/me")
 async def who_am_i(
-    principal: Principal = Depends(get_current_principal),
+    principal: Principal = Depends(
+        get_current_principal
+    ),
 ):
     return principal
 
@@ -43,10 +63,14 @@ async def create_deployment(
         )
     ),
 ):
-    # Platform admins may act across tenants.
-    is_platform_admin = "platform-admin" in principal.roles
+    is_platform_admin = (
+        "platform-admin" in principal.roles
+    )
 
-    if not is_platform_admin and request.tenant_id != principal.tenant_id:
+    if (
+        not is_platform_admin
+        and request.tenant_id != principal.tenant_id
+    ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail={
