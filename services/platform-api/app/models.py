@@ -34,3 +34,27 @@ class DeploymentAccepted(BaseModel):
     model_version: str
     environment: str
     requested_by: str
+
+
+class ApprovalDecision(BaseModel):
+    decision: Literal[
+        "approved",
+        "rejected",
+    ]
+
+    reason: str = Field(
+        min_length=3,
+        max_length=1000,
+    )
+
+
+class DeploymentStatus(BaseModel):
+    request_id: str
+    status: str
+    tenant_id: str
+    model_name: str
+    model_version: str
+    environment: str
+    requested_by: str
+    decision_by: str | None = None
+    decision_reason: str | None = None

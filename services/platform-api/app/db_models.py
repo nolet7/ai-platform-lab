@@ -62,7 +62,33 @@ class DeploymentRequestRecord(Base):
         nullable=False,
     )
 
+    requested_by_sub: Mapped[str | None] = mapped_column(
+        String(255),
+        nullable=True,
+    )
+
+    decision_by: Mapped[str | None] = mapped_column(
+        String(255),
+        nullable=True,
+    )
+
+    decision_by_sub: Mapped[str | None] = mapped_column(
+        String(255),
+        nullable=True,
+    )
+
+    decision_reason: Mapped[str | None] = mapped_column(
+        String(1000),
+        nullable=True,
+    )
+
     created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+    )
+
+    updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
         server_default=func.now(),
