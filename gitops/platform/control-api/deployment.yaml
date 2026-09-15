@@ -39,6 +39,9 @@ spec:
             - configMapRef:
                 name: platform-api-config
 
+            - secretRef:
+                name: platform-db-secret
+
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true

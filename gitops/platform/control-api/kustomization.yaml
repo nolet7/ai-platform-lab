@@ -9,10 +9,11 @@ resources:
   - deployment.yaml
   - service.yaml
   - networkpolicy.yaml
+  - postgres-service.yaml
+  - postgres-statefulset.yaml
+  - postgres-networkpolicy.yaml
 
 labels:
   - pairs:
-      app.kubernetes.io/name: platform-api
-      app.kubernetes.io/component: control-api
       app.kubernetes.io/part-of: ai-platform-control-plane
       app.kubernetes.io/managed-by: argocd

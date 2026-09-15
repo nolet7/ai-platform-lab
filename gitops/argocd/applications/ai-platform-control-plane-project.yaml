@@ -21,6 +21,9 @@ spec:
     - group: apps
       kind: Deployment
 
+    - group: apps
+      kind: StatefulSet
+
     - group: ""
       kind: Service
 

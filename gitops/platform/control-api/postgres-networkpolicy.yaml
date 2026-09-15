@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+
+metadata:
+  name: platform-postgres
+
+spec:
+  podSelector:
+    matchLabels:
+      app: platform-postgres
+
+  policyTypes:
+    - Ingress
+
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: platform-api
+
+      ports:
+        - protocol: TCP
+          port: 5432

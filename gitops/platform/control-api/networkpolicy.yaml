@@ -1,5 +1,6 @@
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
+
 metadata:
   name: platform-api
 
@@ -17,31 +18,50 @@ spec:
         - namespaceSelector:
             matchLabels:
               kubernetes.io/metadata.name: ai-platform
+
       ports:
         - protocol: TCP
           port: 8000
 
   egress:
+
+    # Keycloak JWKS
     - to:
         - namespaceSelector:
             matchLabels:
               kubernetes.io/metadata.name: security
+
           podSelector:
             matchLabels:
               app: keycloak
+
       ports:
         - protocol: TCP
           port: 8080
 
+    # Control-plane PostgreSQL
+    - to:
+        - podSelector:
+            matchLabels:
+              app: platform-postgres
+
+      ports:
+        - protocol: TCP
+          port: 5432
+
+    # Kubernetes DNS
     - to:
         - namespaceSelector:
             matchLabels:
               kubernetes.io/metadata.name: kube-system
+
           podSelector:
             matchLabels:
               k8s-app: kube-dns
+
       ports:
         - protocol: UDP
           port: 53
+
         - protocol: TCP
           port: 53
