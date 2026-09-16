@@ -1,0 +1,234 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: mlflow
+
+spec:
+  replicas: 1
+
+  strategy:
+    type: Recreate
+
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: mlflow
+
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: mlflow
+        app.kubernetes.io/component: tracking-server
+
+    spec:
+
+      initContainers:
+        - name: create-artifact-bucket
+
+          image: ai-platform-mlflow:3.16.0
+          imagePullPolicy: IfNotPresent
+
+          env:
+            - name: MINIO_ROOT_USER
+              valueFrom:
+                secretKeyRef:
+                  name: minio-credentials
+                  key: MINIO_ROOT_USER
+
+            - name: MINIO_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: minio-credentials
+                  key: MINIO_ROOT_PASSWORD
+
+            - name: MLFLOW_S3_ENDPOINT_URL
+              value: http://minio.ml-platform.svc.cluster.local:9000
+
+          command:
+            - python
+            - -c
+
+          args:
+            - |
+              import os
+              import time
+              import boto3
+              from botocore.exceptions import ClientError, EndpointConnectionError
+
+              endpoint = os.environ["MLFLOW_S3_ENDPOINT_URL"]
+              access_key = os.environ["MINIO_ROOT_USER"]
+              secret_key = os.environ["MINIO_ROOT_PASSWORD"]
+
+              bucket = "mlflow-artifacts"
+
+              print(f"Waiting for MinIO at {endpoint}")
+
+              s3 = boto3.client(
+                  "s3",
+                  endpoint_url=endpoint,
+                  aws_access_key_id=access_key,
+                  aws_secret_access_key=secret_key,
+                  region_name="us-east-1",
+              )
+
+              for attempt in range(60):
+                  try:
+                      s3.list_buckets()
+                      print("MinIO is reachable")
+                      break
+
+                  except (
+                      EndpointConnectionError,
+                      ClientError,
+                  ) as error:
+                      print(
+                          f"MinIO not ready "
+                          f"(attempt {attempt + 1}/60): "
+                          f"{error}"
+                      )
+                      time.sleep(2)
+
+              else:
+                  raise RuntimeError(
+                      "MinIO did not become ready"
+                  )
+
+              try:
+                  s3.head_bucket(Bucket=bucket)
+                  print(
+                      f"Bucket already exists: {bucket}"
+                  )
+
+              except ClientError as error:
+                  code = (
+                      error.response
+                      .get("Error", {})
+                      .get("Code", "")
+                  )
+
+                  if code in (
+                      "404",
+                      "NoSuchBucket",
+                      "NotFound",
+                  ):
+                      print(
+                          f"Creating bucket: {bucket}"
+                      )
+
+                      s3.create_bucket(
+                          Bucket=bucket
+                      )
+
+                  else:
+                      raise
+
+              print(
+                  "MLflow artifact bucket is ready"
+              )
+
+      containers:
+        - name: mlflow
+
+          image: ai-platform-mlflow:3.16.0
+          imagePullPolicy: IfNotPresent
+
+          env:
+            - name: MLFLOW_DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: mlflow-postgres-credentials
+                  key: POSTGRES_USER
+
+            - name: MLFLOW_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mlflow-postgres-credentials
+                  key: POSTGRES_PASSWORD
+
+            - name: MLFLOW_DB_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: mlflow-postgres-credentials
+                  key: POSTGRES_DB
+
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: minio-credentials
+                  key: MINIO_ROOT_USER
+
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: minio-credentials
+                  key: MINIO_ROOT_PASSWORD
+
+            - name: AWS_DEFAULT_REGION
+              value: us-east-1
+
+            - name: MLFLOW_S3_ENDPOINT_URL
+              value: http://minio.ml-platform.svc.cluster.local:9000
+
+            - name: MLFLOW_ARTIFACTS_DESTINATION
+              value: s3://mlflow-artifacts
+
+            - name: MLFLOW_HOST
+              value: 0.0.0.0
+
+            - name: MLFLOW_PORT
+              value: "5000"
+
+            - name: MLFLOW_WORKERS
+              value: "1"
+
+          command:
+            - /bin/sh
+            - -c
+
+          args:
+            - |
+              export MLFLOW_BACKEND_STORE_URI="postgresql+psycopg2://${MLFLOW_DB_USER}:${MLFLOW_DB_PASSWORD}@mlflow-postgres:5432/${MLFLOW_DB_NAME}"
+
+              echo "Starting MLflow Tracking Server"
+
+              exec mlflow server \
+                --host 0.0.0.0 \
+                --port 5000 \
+                --backend-store-uri "${MLFLOW_BACKEND_STORE_URI}" \
+                --artifacts-destination "${MLFLOW_ARTIFACTS_DESTINATION}"
+
+          ports:
+            - name: http
+              containerPort: 5000
+
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+
+            initialDelaySeconds: 15
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 12
+
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 6
+
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+
+            limits:
+              cpu: "2"
+              memory: 2Gi
+
+          securityContext:
+            allowPrivilegeEscalation: false

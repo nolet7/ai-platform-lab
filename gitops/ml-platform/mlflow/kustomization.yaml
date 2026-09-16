@@ -1,0 +1,15 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: ml-platform
+
+resources:
+  - postgres-service.yaml
+  - postgres-statefulset.yaml
+  - deployment.yaml
+  - service.yaml
+
+labels:
+  - pairs:
+      app.kubernetes.io/part-of: ai-platform
+      platform.ai/component: ml-platform
