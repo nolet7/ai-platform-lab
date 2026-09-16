@@ -83,3 +83,6 @@ token.json
 **/.pytest_cache/
 **/.venv/
 security/keycloak/runtime/
+
+# Python packaging metadata
+*.egg-info/
