@@ -1,0 +1,26 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+
+metadata:
+  name: ml-platform-namespace
+  namespace: argocd
+
+spec:
+  project: ai-platform-ml
+
+  source:
+    repoURL: https://github.com/nolet7/ai-platform-lab.git
+    targetRevision: main
+    path: gitops/ml-platform/namespaces
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: ml-platform
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+
+    syncOptions:
+      - CreateNamespace=false

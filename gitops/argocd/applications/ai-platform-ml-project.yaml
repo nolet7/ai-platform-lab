@@ -1,0 +1,24 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+
+metadata:
+  name: ai-platform-ml
+  namespace: argocd
+
+spec:
+  description: AI/ML platform services including MLflow, MinIO, and KServe
+
+  sourceRepos:
+    - https://github.com/nolet7/ai-platform-lab.git
+
+  destinations:
+    - namespace: ml-platform
+      server: https://kubernetes.default.svc
+
+  clusterResourceWhitelist:
+    - group: ""
+      kind: Namespace
+
+  namespaceResourceWhitelist:
+    - group: "*"
+      kind: "*"
