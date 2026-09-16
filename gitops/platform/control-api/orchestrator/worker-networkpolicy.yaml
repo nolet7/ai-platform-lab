@@ -13,6 +13,7 @@ spec:
     - Egress
 
   egress:
+    # Allow worker to reach Redis queue
     - to:
         - podSelector:
             matchLabels:
@@ -22,6 +23,7 @@ spec:
         - protocol: TCP
           port: 6379
 
+    # Allow worker to reach PostgreSQL
     - to:
         - podSelector:
             matchLabels:
@@ -31,6 +33,7 @@ spec:
         - protocol: TCP
           port: 5432
 
+    # Allow DNS resolution through CoreDNS
     - to:
         - namespaceSelector:
             matchLabels:
@@ -46,3 +49,12 @@ spec:
 
         - protocol: TCP
           port: 53
+
+    # Allow outbound HTTPS for GitHub GitOps publishing
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+
+      ports:
+        - protocol: TCP
+          port: 443
