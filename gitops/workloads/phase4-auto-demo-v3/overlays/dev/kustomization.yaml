@@ -1,0 +1,19 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../base
+
+namespace: ai-platform-dev
+
+nameSuffix: -dev
+
+replicas:
+  - name: phase4-auto-demo-v3
+    count: 1
+
+labels:
+  - pairs:
+      platform.example.com/environment: dev
+      platform.example.com/tenant: tax-ml-team
+      platform.example.com/model-version: "1.0.0"

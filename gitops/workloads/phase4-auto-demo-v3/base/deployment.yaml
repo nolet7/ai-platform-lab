@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: phase4-auto-demo-v3
+  labels:
+    app.kubernetes.io/name: phase4-auto-demo-v3
+    platform.ai/model: phase4-auto-demo-v3
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: phase4-auto-demo-v3
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: phase4-auto-demo-v3
+        platform.ai/model: phase4-auto-demo-v3
+    spec:
+      containers:
+        - name: model-runtime
+          image: nginx:1.31.5-alpine3.24
+          ports:
+            - name: http
+              containerPort: 80
+          env:
+            - name: MODEL_NAME
+              value: "phase4-auto-demo-v3"
+            - name: MODEL_VERSION
+              value: "1.0.0"
+            - name: PLATFORM_TENANT
+              value: "tax-ml-team"
+            - name: PLATFORM_REQUEST_ID
+              value: "43395400-7c3b-4399-a987-74271a3916fe"
+          resources:
+            requests:
+              cpu: 25m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 2
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10

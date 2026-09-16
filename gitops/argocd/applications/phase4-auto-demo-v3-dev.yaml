@@ -1,0 +1,26 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+
+metadata:
+  name: phase4-auto-demo-v3-dev
+  namespace: argocd
+
+spec:
+  project: ai-platform-dev
+
+  source:
+    repoURL: https://github.com/nolet7/ai-platform-lab.git
+    targetRevision: main
+    path: gitops/workloads/phase4-auto-demo-v3/overlays/dev
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: ai-platform-dev
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+
+    syncOptions:
+      - CreateNamespace=false
