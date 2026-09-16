@@ -1,0 +1,17 @@
+Metadata-Version: 2.4
+Name: ai-platform-gateway
+Version: 0.1.0
+Summary: Governed enterprise AI gateway for the AI Platform Lab
+Requires-Python: >=3.11
+Requires-Dist: fastapi
+Requires-Dist: uvicorn[standard]
+Requires-Dist: pydantic
+Requires-Dist: pydantic-settings
+Requires-Dist: httpx
+Requires-Dist: redis>=5.0
+Requires-Dist: prometheus-client
+Requires-Dist: pyyaml
+Provides-Extra: dev
+Requires-Dist: pytest; extra == "dev"
+Requires-Dist: pytest-asyncio; extra == "dev"
+Requires-Dist: ruff; extra == "dev"

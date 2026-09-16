@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tax-classifier
+  labels:
+    app.kubernetes.io/name: tax-classifier
+    platform.ai/model: tax-classifier
+spec:
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: tax-classifier
+
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: tax-classifier
+        platform.ai/model: tax-classifier
+
+    spec:
+      containers:
+        - name: model-runtime
+
+          # Phase 4 placeholder runtime.
+          # Phase 5 will replace this with KServe.
+          image: nginx:1.31.5-alpine3.24
+
+          ports:
+            - name: http
+              containerPort: 80
+
+          env:
+            - name: MODEL_NAME
+              value: tax-classifier
+
+            - name: MODEL_VERSION
+              value: "2.0.0"
+
+            - name: PLATFORM_TENANT
+              value: tax-ml-team
+
+          resources:
+            requests:
+              cpu: 25m
+              memory: 32Mi
+
+            limits:
+              cpu: 100m
+              memory: 64Mi
+
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 2
+            periodSeconds: 5
+
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
