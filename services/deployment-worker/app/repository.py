@@ -468,3 +468,77 @@ def fail_job(
             )
 
         session.commit()
+
+
+def complete_gitops_job(
+    job_id: UUID,
+    result_payload: dict,
+):
+    now = utcnow()
+
+    with SessionLocal() as session:
+        job = session.execute(
+            select(DeploymentJobRecord)
+            .where(
+                DeploymentJobRecord.job_id
+                == job_id
+            )
+            .with_for_update()
+        ).scalar_one()
+
+        deployment = session.get(
+            DeploymentRequestRecord,
+            job.request_id,
+        )
+
+        if job.status == "succeeded":
+            return
+
+        job.status = "succeeded"
+        job.result_payload = result_payload
+        job.finished_at = now
+        job.updated_at = now
+        job.last_error = None
+
+        deployment.execution_status = (
+            "gitops_committed"
+        )
+
+        commit_sha = result_payload.get(
+            "gitops",
+            {},
+        ).get(
+            "commit_sha",
+            "unknown",
+        )
+
+        deployment.execution_message = (
+            "GitOps desired state committed "
+            f"at {commit_sha[:12]}"
+        )
+
+        _audit(
+            session=session,
+            deployment=deployment,
+            event_type=(
+                "deployment.execution."
+                "gitops_committed"
+            ),
+            event_data={
+                "job_id": str(job.job_id),
+                "commit_sha": commit_sha,
+                "application": (
+                    result_payload.get(
+                        "gitops",
+                        {},
+                    ).get(
+                        "application"
+                    )
+                ),
+                "next_action": (
+                    "argocd_reconcile"
+                ),
+            },
+        )
+
+        session.commit()

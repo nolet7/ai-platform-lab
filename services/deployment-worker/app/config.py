@@ -44,3 +44,28 @@ RETRY_DELAY_SECONDS = int(
         "15",
     )
 )
+
+GITHUB_REPOSITORY = os.getenv(
+    "GITHUB_REPOSITORY",
+    "nolet7/ai-platform-lab",
+)
+
+GITHUB_BRANCH = os.getenv(
+    "GITHUB_BRANCH",
+    "main",
+)
+
+GITHUB_TOKEN = os.getenv(
+    "GITHUB_TOKEN",
+    "",
+)
+
+GITOPS_BASE_IMAGE = os.getenv(
+    "GITOPS_BASE_IMAGE",
+    "nginx:1.31.5-alpine3.24",
+)
+
+GITHUB_API_URL = os.getenv(
+    "GITHUB_API_URL",
+    "https://api.github.com",
+)

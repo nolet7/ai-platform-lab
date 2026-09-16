@@ -1,8 +1,11 @@
 from uuid import UUID
 
+from .gitops_writer import (
+    publish_gitops_manifests,
+)
 from .repository import (
     claim_job,
-    complete_job,
+    complete_gitops_job,
     fail_job,
 )
 
@@ -18,16 +21,14 @@ def process_deployment_job(
     job_id: str,
 ):
     """
-    Process one approved deployment orchestration job.
+    Process one approved deployment job and
+    publish its desired state to Git.
 
-    Phase 2K stops at producing validated desired state.
-    Phase 3 will consume this desired state and generate
-    GitOps manifests for Argo CD.
+    Argo CD, not this worker, performs the
+    Kubernetes reconciliation.
     """
 
-    parsed_job_id = UUID(
-        job_id
-    )
+    parsed_job_id = UUID(job_id)
 
     payload = claim_job(
         parsed_job_id
@@ -91,25 +92,46 @@ def process_deployment_job(
                     "version": model_version,
                 },
                 "environment": environment,
-                "deploymentMode": "gitops",
+                "deploymentMode": (
+                    "gitops"
+                ),
             },
+        }
+
+        gitops_result = (
+            publish_gitops_manifests(
+                payload
+            )
+        )
+
+        result_payload = {
+            "desired_state": desired_spec,
+            "gitops": gitops_result,
             "nextAction": (
-                "generate_gitops_manifest"
+                "argocd_reconcile"
             ),
         }
 
-        complete_job(
+        complete_gitops_job(
             job_id=parsed_job_id,
-            result_payload=desired_spec,
+            result_payload=result_payload,
         )
 
         return {
-            "status": (
-                "ready_for_gitops"
-            ),
+            "status": "gitops_committed",
             "job_id": job_id,
             "request_id": (
                 payload["request_id"]
+            ),
+            "commit_sha": (
+                gitops_result[
+                    "commit_sha"
+                ]
+            ),
+            "application": (
+                gitops_result[
+                    "application"
+                ]
             ),
         }
 
@@ -118,5 +140,4 @@ def process_deployment_job(
             job_id=parsed_job_id,
             error=str(error),
         )
-
         raise

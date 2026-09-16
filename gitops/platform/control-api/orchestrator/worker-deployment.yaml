@@ -30,7 +30,7 @@ spec:
 
       containers:
         - name: worker
-          image: ai-platform-deployment-worker:0.1.0
+          image: ai-platform-deployment-worker:0.2.0
           imagePullPolicy: IfNotPresent
 
           command:
@@ -47,6 +47,9 @@ spec:
 
             - secretRef:
                 name: platform-queue-secret
+     
+            - secretRef:
+                name: gitops-github-writer
 
           securityContext:
             allowPrivilegeEscalation: false
