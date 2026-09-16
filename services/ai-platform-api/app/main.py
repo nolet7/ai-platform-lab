@@ -19,6 +19,9 @@ from app.routers import (
     identity,
     inference,
 )
+from app.tracing import (
+    configure_tracing,
+)
 
 
 configure_logging()
@@ -82,11 +85,11 @@ async def lifespan(
 
 app = FastAPI(
     title=settings.app_name,
-    version="2O",
+    version="2P",
     description=(
-        "Observable secure API layer "
-        "for the Self-Service AI/ML "
-        "Deployment Control Plane."
+        "Secure observable API for the "
+        "Self-Service AI/ML Deployment "
+        "Control Plane."
     ),
     lifespan=lifespan,
 )
@@ -114,18 +117,26 @@ app.include_router(
 )
 
 
+configure_tracing(app)
+
+
 @app.get("/")
 async def root():
     return {
         "service":
             settings.app_name,
-        "phase": "2O",
+        "phase":
+            "2P",
         "authentication":
             "Keycloak OIDC",
         "authorization":
             "RBAC",
-        "observability":
-            "Prometheus + Grafana",
+        "metrics":
+            "Prometheus",
+        "logs":
+            "Loki",
+        "tracing":
+            "OpenTelemetry + Tempo",
         "status":
             "running",
     }

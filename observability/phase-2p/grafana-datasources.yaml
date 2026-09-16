@@ -1,0 +1,76 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: phase2p-grafana-datasources
+  namespace: observability
+
+  labels:
+    grafana_datasource: "1"
+
+data:
+
+  datasources.yaml: |
+
+    apiVersion: 1
+
+    datasources:
+
+      - name: Loki
+
+        uid: loki
+
+        type: loki
+
+        access: proxy
+
+        url:
+          http://loki.observability.svc.cluster.local:3100
+
+        jsonData:
+
+          derivedFields:
+
+            - name: TraceID
+
+              datasourceUid:
+                tempo
+
+              matcherRegex:
+                '"trace_id":"([0-9a-f]{32})"'
+
+              url:
+                '${__value.raw}'
+
+
+      - name: Tempo
+
+        uid: tempo
+
+        type: tempo
+
+        access: proxy
+
+        url:
+          http://tempo.observability.svc.cluster.local:3200
+
+        jsonData:
+
+          nodeGraph:
+            enabled: true
+
+          tracesToLogsV2:
+
+            datasourceUid:
+              loki
+
+            spanStartTimeShift:
+              "-1m"
+
+            spanEndTimeShift:
+              "1m"
+
+            filterByTraceID:
+              true
+
+            filterBySpanID:
+              false
