@@ -11,7 +11,14 @@ class ArgoAPIError(RuntimeError):
     pass
 
 
-def inspect_application(application: str, *, base_url: str, token: str, expected_revision: str) -> dict:
+def inspect_application(
+    application: str,
+    *,
+    base_url: str,
+    token: str,
+    expected_revision: str,
+    ca_bundle: str,
+) -> dict:
     """Request a hard refresh and return the observed Argo state."""
     if not APPLICATION_NAME.fullmatch(application):
         raise ValueError("Invalid Argo application name")
@@ -22,7 +29,7 @@ def inspect_application(application: str, *, base_url: str, token: str, expected
     if base_url != "https://argocd-server.argocd.svc.cluster.local:443":
         raise ArgoAPIError("Argo API endpoint is not the in-cluster service")
     try:
-        with httpx.Client(timeout=10.0) as client:
+        with httpx.Client(timeout=10.0, verify=ca_bundle) as client:
             response = client.get(
                 f"{base_url.rstrip('/')}/api/v1/applications/{application}",
                 params={"refresh": "hard"},

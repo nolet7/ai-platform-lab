@@ -81,3 +81,5 @@ ARGO_API_URL = os.getenv(
 )
 
 ARGO_API_TOKEN = os.getenv("ARGO_API_TOKEN", "")
+
+ARGO_CA_BUNDLE = os.getenv("ARGO_CA_BUNDLE", "/etc/ai-platform-ca/ca.crt")

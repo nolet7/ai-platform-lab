@@ -26,6 +26,7 @@ def test_inspects_exact_application_and_revision():
             base_url=BASE,
             token="test-token",
             expected_revision=SHA,
+            ca_bundle="/tmp/ca.crt",
         )
     assert result["revision_observed"] is True
     assert result["health_status"] == "Healthy"

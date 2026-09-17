@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from .config import MLFLOW_TRACKING_URI, ARGO_API_URL, ARGO_API_TOKEN
+from .config import MLFLOW_TRACKING_URI, ARGO_API_URL, ARGO_API_TOKEN, ARGO_CA_BUNDLE
 from .argo_api import inspect_application, ArgoAPIError
 from .model_registry import resolve_model_version
 
@@ -127,6 +127,7 @@ def process_deployment_job(
                 base_url=ARGO_API_URL,
                 token=ARGO_API_TOKEN,
                 expected_revision=gitops_result["commit_sha"],
+                ca_bundle=ARGO_CA_BUNDLE,
             )
         except ArgoAPIError:
             argo_result = {

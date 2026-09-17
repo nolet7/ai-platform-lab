@@ -55,10 +55,6 @@ spec:
                 name: argocd-api-observer
                 optional: true
 
-          env:
-            - name: SSL_CERT_FILE
-              value: /etc/ai-platform-ca/ca.crt
-
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
