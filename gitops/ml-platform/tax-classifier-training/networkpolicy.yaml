@@ -14,6 +14,8 @@ spec:
     - Egress
 
   egress:
+
+    # Kubernetes DNS
     - to:
         - namespaceSelector:
             matchLabels:
@@ -30,6 +32,7 @@ spec:
         - protocol: TCP
           port: 53
 
+    # MLflow Tracking + Model Registry
     - to:
         - podSelector:
             matchLabels:
@@ -38,3 +41,13 @@ spec:
       ports:
         - protocol: TCP
           port: 5000
+
+    # MinIO S3 artifact storage
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: minio
+
+      ports:
+        - protocol: TCP
+          port: 9000
