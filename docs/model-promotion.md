@@ -34,3 +34,14 @@ pod on TCP 5000 and receives the in-cluster tracking URI from its ConfigMap.
 On 2026-09-17 a live lookup of registered model version 1 from the worker
 returned READY. This is a prerequisite for immutable release resolution; the
 worker still renders a generic Deployment and does not yet promote a model.
+
+## Immutable version resolver
+
+The worker source now includes `app/model_registry.py`. It accepts a
+positive numeric MLflow model version, checks the READY registry record,
+immutable logged model ID, download URI, run ID, source Git SHA, dataset
+lineage, and macro F1, then returns a pinned S3 URI. Unit tests reject aliases,
+unsafe versions, artifact mismatches, and lineage mismatches. A live version 1
+lookup returned the same immutable URI as the candidate validator on
+2026-09-17. The resolver is not yet wired into the worker publishing path;
+approved jobs still render a generic Deployment.
