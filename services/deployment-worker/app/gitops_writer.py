@@ -1,4 +1,5 @@
 import re
+from uuid import UUID
 
 import httpx
 
@@ -34,6 +35,24 @@ class GitOpsPublishError(RuntimeError):
     pass
 
 
+DNS_LABEL = re.compile(r"[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\Z")
+VERSION = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}\Z")
+
+
+def validate_payload(payload: dict) -> None:
+    for field in ("model_name", "tenant_id"):
+        value = payload.get(field)
+        if not isinstance(value, str) or not DNS_LABEL.fullmatch(value):
+            raise GitOpsPublishError(f"{field} must be a DNS label")
+    version = payload.get("model_version")
+    if not isinstance(version, str) or not VERSION.fullmatch(version):
+        raise GitOpsPublishError("model_version contains unsafe characters")
+    try:
+        UUID(str(payload["request_id"]))
+    except (KeyError, TypeError, ValueError) as error:
+        raise GitOpsPublishError("request_id must be a UUID") from error
+
+
 def slugify(value: str) -> str:
     value = value.lower()
     value = re.sub(
@@ -52,6 +71,8 @@ def slugify(value: str) -> str:
 def render_gitops_files(
     payload: dict,
 ) -> tuple[dict[str, str], dict]:
+
+    validate_payload(payload)
 
     environment = payload["environment"]
     config = ENVIRONMENTS.get(environment)
