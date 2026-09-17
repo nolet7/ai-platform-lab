@@ -143,6 +143,5 @@ spec:
                 fromFieldPath: metadata.name
                 toFieldPath: status.initJobName
             readinessChecks:
-              - type: MatchInteger
+              - type: NonEmpty
                 fieldPath: status.succeeded
-                matchInteger: 1
