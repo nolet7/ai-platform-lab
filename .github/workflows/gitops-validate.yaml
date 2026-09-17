@@ -7,6 +7,7 @@ on:
     paths:
       - "gitops/**"
       - "observability/**"
+      - "scripts/check_gitops_secrets.py"
       - ".github/workflows/gitops-validate.yaml"
 
   push:
@@ -15,6 +16,7 @@ on:
     paths:
       - "gitops/**"
       - "observability/**"
+      - "scripts/check_gitops_secrets.py"
       - ".github/workflows/gitops-validate.yaml"
 
 permissions:
@@ -83,6 +85,13 @@ jobs:
 
           echo "Validated ${count} Kustomization directories."
 
+      - name: Validate YAML and reject inline Secret payloads
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m venv /tmp/gitops-validation
+          /tmp/gitops-validation/bin/pip install --disable-pip-version-check PyYAML==6.0.3
+          /tmp/gitops-validation/bin/python scripts/check_gitops_secrets.py
       - name: Reject committed PEM private keys
         shell: bash
         run: |
