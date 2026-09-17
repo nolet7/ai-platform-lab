@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Namespace
+
+metadata:
+  name: cert-manager
+
+  labels:
+    app.kubernetes.io/part-of: ai-platform
+    platform.ai/component: certificate-management

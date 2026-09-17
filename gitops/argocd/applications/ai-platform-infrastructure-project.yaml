@@ -1,0 +1,30 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+
+metadata:
+  name: ai-platform-infrastructure
+  namespace: argocd
+
+  annotations:
+    argocd.argoproj.io/sync-wave: "-40"
+
+spec:
+  description: Cluster-level infrastructure for the AI Platform
+
+  sourceRepos:
+    - https://github.com/nolet7/ai-platform-lab.git
+
+  destinations:
+    - namespace: cert-manager
+      server: https://kubernetes.default.svc
+
+    - namespace: kserve
+      server: https://kubernetes.default.svc
+
+  clusterResourceWhitelist:
+    - group: "*"
+      kind: "*"
+
+  namespaceResourceWhitelist:
+    - group: "*"
+      kind: "*"
