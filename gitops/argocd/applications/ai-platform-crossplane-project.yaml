@@ -1,0 +1,41 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: ai-platform-crossplane
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-40"
+spec:
+  description: Crossplane local control plane and namespaced model workspace demo
+  sourceRepos:
+    - https://charts.crossplane.io/stable
+    - https://github.com/nolet7/ai-platform-lab.git
+  destinations:
+    - namespace: crossplane-system
+      server: https://kubernetes.default.svc
+    - namespace: ai-platform-dev
+      server: https://kubernetes.default.svc
+  clusterResourceWhitelist:
+    - group: ""
+      kind: Namespace
+    - group: rbac.authorization.k8s.io
+      kind: ClusterRole
+    - group: rbac.authorization.k8s.io
+      kind: ClusterRoleBinding
+    - group: pkg.crossplane.io
+      kind: Function
+    - group: apiextensions.crossplane.io
+      kind: CompositeResourceDefinition
+    - group: apiextensions.crossplane.io
+      kind: Composition
+  namespaceResourceWhitelist:
+    - group: ""
+      kind: Secret
+    - group: ""
+      kind: Service
+    - group: ""
+      kind: ServiceAccount
+    - group: apps
+      kind: Deployment
+    - group: platform.ai
+      kind: ModelWorkspace

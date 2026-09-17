@@ -1,0 +1,147 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: model-workspace-local
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  compositeTypeRef:
+    apiVersion: platform.ai/v1alpha1
+    kind: ModelWorkspace
+  mode: Pipeline
+  pipeline:
+    - step: create-local-workspace
+      functionRef:
+        name: function-patch-and-transform
+      input:
+        apiVersion: pt.fn.crossplane.io/v1beta1
+        kind: Resources
+        resources:
+          - name: storage
+            base:
+              apiVersion: v1
+              kind: PersistentVolumeClaim
+              spec:
+                accessModes:
+                  - ReadWriteOnce
+                storageClassName: standard
+                resources:
+                  requests:
+                    storage: 1Gi
+            patches:
+              - type: FromCompositeFieldPath
+                fromFieldPath: metadata.name
+                toFieldPath: metadata.name
+                transforms:
+                  - type: string
+                    string:
+                      type: Format
+                      fmt: "%s-data"
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.storage
+                toFieldPath: spec.resources.requests.storage
+              - type: ToCompositeFieldPath
+                fromFieldPath: metadata.name
+                toFieldPath: status.pvcName
+              - type: ToCompositeFieldPath
+                fromFieldPath: status.phase
+                toFieldPath: status.storagePhase
+            readinessChecks:
+              - type: MatchString
+                fieldPath: status.phase
+                matchString: Bound
+          - name: metadata
+            base:
+              apiVersion: v1
+              kind: ConfigMap
+              data: {}
+            patches:
+              - type: FromCompositeFieldPath
+                fromFieldPath: metadata.name
+                toFieldPath: metadata.name
+                transforms:
+                  - type: string
+                    string:
+                      type: Format
+                      fmt: "%s-info"
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.modelName
+                toFieldPath: data.modelName
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.environment
+                toFieldPath: data.environment
+            readinessChecks:
+              - type: None
+          - name: initialize
+            base:
+              apiVersion: batch/v1
+              kind: Job
+              spec:
+                backoffLimit: 3
+                template:
+                  spec:
+                    restartPolicy: Never
+                    securityContext:
+                      seccompProfile:
+                        type: RuntimeDefault
+                    containers:
+                      - name: write-workspace-metadata
+                        image: busybox:1.36.1
+                        command:
+                          - /bin/sh
+                          - -ec
+                          - 'printf "model=%s\nenvironment=%s\n" "$MODEL_NAME" "$ENVIRONMENT" > /workspace/workspace.txt'
+                        env:
+                          - name: MODEL_NAME
+                            value: ""
+                          - name: ENVIRONMENT
+                            value: ""
+                        resources:
+                          requests:
+                            cpu: 10m
+                            memory: 16Mi
+                          limits:
+                            cpu: 100m
+                            memory: 64Mi
+                        securityContext:
+                          allowPrivilegeEscalation: false
+                          readOnlyRootFilesystem: true
+                          capabilities:
+                            drop:
+                              - ALL
+                        volumeMounts:
+                          - name: workspace
+                            mountPath: /workspace
+                    volumes:
+                      - name: workspace
+                        persistentVolumeClaim:
+                          claimName: placeholder
+            patches:
+              - type: FromCompositeFieldPath
+                fromFieldPath: metadata.name
+                toFieldPath: metadata.name
+                transforms:
+                  - type: string
+                    string:
+                      type: Format
+                      fmt: "%s-init"
+              - type: FromCompositeFieldPath
+                fromFieldPath: metadata.name
+                toFieldPath: spec.template.spec.volumes[0].persistentVolumeClaim.claimName
+                transforms:
+                  - type: string
+                    string:
+                      type: Format
+                      fmt: "%s-data"
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.modelName
+                toFieldPath: spec.template.spec.containers[0].env[0].value
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.environment
+                toFieldPath: spec.template.spec.containers[0].env[1].value
+              - type: ToCompositeFieldPath
+                fromFieldPath: metadata.name
+                toFieldPath: status.initJobName
+            readinessChecks:
+              - type: NonEmpty
+                fieldPath: status.succeeded

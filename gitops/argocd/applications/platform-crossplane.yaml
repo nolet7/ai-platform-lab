@@ -1,0 +1,44 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: platform-crossplane
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "5"
+spec:
+  project: ai-platform-crossplane
+  source:
+    repoURL: https://charts.crossplane.io/stable
+    chart: crossplane
+    targetRevision: 2.4.1
+    helm:
+      releaseName: crossplane
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: crossplane-system
+  # The chart creates empty TLS Secrets; its init container fills their data.
+  # Argo must leave that controller-owned data intact.
+  ignoreDifferences:
+    - group: ""
+      kind: Secret
+      name: crossplane-root-ca
+      jsonPointers:
+        - /data
+    - group: ""
+      kind: Secret
+      name: crossplane-tls-server
+      jsonPointers:
+        - /data
+    - group: ""
+      kind: Secret
+      name: crossplane-tls-client
+      jsonPointers:
+        - /data
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - Prune=false
+      - RespectIgnoreDifferences=true
