@@ -1,0 +1,31 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: platform-pki
+  namespace: argocd
+
+  annotations:
+    # cert-manager is wave -30.
+    # PKI must start only after cert-manager exists.
+    argocd.argoproj.io/sync-wave: "-20"
+
+spec:
+  project: ai-platform-infrastructure
+
+  source:
+    repoURL: https://github.com/nolet7/ai-platform-lab.git
+    targetRevision: main
+    path: gitops/platform-infrastructure/pki
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: cert-manager
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+
+    syncOptions:
+      - ServerSideApply=true
+      - CreateNamespace=false

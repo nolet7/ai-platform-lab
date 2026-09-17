@@ -1,0 +1,34 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: ai-platform-root-ca
+  namespace: cert-manager
+  annotations:
+    argocd.argoproj.io/sync-wave: "-10"
+spec:
+  isCA: true
+  commonName: AI Platform Local Root CA
+  secretName: ai-platform-root-ca
+
+  # Five-year local lab trust anchor.
+  duration: 43800h
+  renewBefore: 720h
+
+  privateKey:
+    algorithm: RSA
+    size: 4096
+    encoding: PKCS1
+
+    # Keep the local root key stable so workstation trust
+    # does not unexpectedly break after key rotation.
+    rotationPolicy: Never
+
+  usages:
+    - cert sign
+    - crl sign
+    - digital signature
+
+  issuerRef:
+    name: ai-platform-bootstrap-selfsigned
+    kind: ClusterIssuer
+    group: cert-manager.io
