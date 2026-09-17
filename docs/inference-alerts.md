@@ -21,3 +21,5 @@ These alerts cover the GitOps-managed `tax-document-classifier` KServe predictor
 ## Verification
 
 After any change, confirm the PodMonitor target is `up=1` in Prometheus, the InferenceService is `Ready=True`, and all three synthetic V2 inference checks pass. Alert routing through Alertmanager and end-to-end notification delivery remain separate verification steps.
+
+Live validation on 2026-09-17: the predictor PodMonitor target returned up=1, all four rules loaded, and the V2 health and three synthetic predictions passed after fixing KServe Service port selection. Run `scripts/ml-platform/verify-tax-classifier-monitoring.py` to repeat the scrape check.
