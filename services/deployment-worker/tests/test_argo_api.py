@@ -41,12 +41,12 @@ def test_inspects_exact_application_and_revision():
 def test_rejects_invalid_application(name):
     with pytest.raises(ValueError):
         inspect_application(
-            name, base_url=BASE, token="test", expected_revision=SHA
+            name, base_url=BASE, token="test", expected_revision=SHA, ca_bundle="/tmp/ca.crt"
         )
 
 
 def test_requires_scoped_token():
     with pytest.raises(ArgoAPIError):
         inspect_application(
-            "tax-classifier-dev", base_url=BASE, token="", expected_revision=SHA
+            "tax-classifier-dev", base_url=BASE, token="", expected_revision=SHA, ca_bundle="/tmp/ca.crt"
         )
