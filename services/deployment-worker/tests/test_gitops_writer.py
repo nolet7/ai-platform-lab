@@ -17,7 +17,7 @@ class GitOpsWriterTests(unittest.TestCase):
     def setUp(self):
         self.payload = {
             "environment": "staging",
-            "model_name": "tax-document-classifier",
+            "model_name": "platform-smoke-test",
             "model_version": "1",
             "tenant_id": "team-ml",
             "request_id": str(uuid4()),
@@ -25,9 +25,9 @@ class GitOpsWriterTests(unittest.TestCase):
 
     def test_valid_payload_renders_expected_paths(self):
         files, metadata = render_gitops_files(self.payload)
-        self.assertEqual(metadata["application"], "tax-document-classifier-staging")
+        self.assertEqual(metadata["application"], "platform-smoke-test-staging")
         self.assertTrue(all(path.startswith("gitops/") for path in files))
-        self.assertIn("MODEL_VERSION", files["gitops/workloads/tax-document-classifier/base/deployment.yaml"])
+        self.assertIn("MODEL_VERSION", files["gitops/workloads/platform-smoke-test/base/deployment.yaml"])
 
     def test_rejects_yaml_injection(self):
         for field, value in (

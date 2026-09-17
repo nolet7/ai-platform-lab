@@ -43,5 +43,19 @@ immutable logged model ID, download URI, run ID, source Git SHA, dataset
 lineage, and macro F1, then returns a pinned S3 URI. Unit tests reject aliases,
 unsafe versions, artifact mismatches, and lineage mismatches. A live version 1
 lookup returned the same immutable URI as the candidate validator on
-2026-09-17. The resolver is not yet wired into the worker publishing path;
-approved jobs still render a generic Deployment.
+2026-09-17. The resolver is wired into the worker publishing path for the tax classifier;
+other legacy workload names still use the generic Deployment renderer.
+
+## Approved staging release rendering
+
+For `tax-document-classifier`, the worker now resolves an approved numeric
+model version through MLflow before GitOps generation. The generated
+InferenceService records tenant, environment, request ID, model ID, run ID,
+source Git SHA, dataset version, and immutable S3 URI. It references the
+existing namespace-scoped MLServer runtime and serving ServiceAccount in
+`ml-platform`, and receives a dedicated NetworkPolicy. Direct production
+requests fail until a verified staging gate and rollback are implemented.
+This keeps logical environment labels in a shared serving namespace; physical
+namespace isolation remains a separate hardening task. Serving access for a
+new model ID must be bootstrapped before promoting that ID because the current
+S3 identity is scoped to the previously verified artifact prefix.

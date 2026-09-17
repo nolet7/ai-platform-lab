@@ -1,5 +1,8 @@
 from uuid import UUID
 
+from .config import MLFLOW_TRACKING_URI
+from .model_registry import resolve_model_version
+
 from .gitops_writer import (
     publish_gitops_manifests,
 )
@@ -71,6 +74,16 @@ def process_deployment_job(
                 "model_version is required"
             )
 
+        if model_name == "tax-document-classifier":
+            reference = resolve_model_version(
+                model_name, model_version, MLFLOW_TRACKING_URI
+            )
+            if reference["macro_f1"] < 0.8:
+                raise ValueError("Model validation threshold was not met")
+            payload = {**payload, "model_reference": reference}
+        else:
+            reference = None
+
         desired_spec = {
             "apiVersion": (
                 "platform.ai/v1alpha1"
@@ -95,6 +108,7 @@ def process_deployment_job(
                 "deploymentMode": (
                     "gitops"
                 ),
+                "immutableModel": reference,
             },
         }
 

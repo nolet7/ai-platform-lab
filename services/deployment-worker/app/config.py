@@ -69,3 +69,8 @@ GITHUB_API_URL = os.getenv(
     "GITHUB_API_URL",
     "https://api.github.com",
 )
+
+MLFLOW_TRACKING_URI = os.getenv(
+    "MLFLOW_TRACKING_URI",
+    "http://mlflow.ml-platform.svc.cluster.local:5000",
+)

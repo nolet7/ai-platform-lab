@@ -3,6 +3,8 @@ from uuid import UUID
 
 import httpx
 
+from .model_release_writer import render_model_release_files
+
 from .config import (
     GITHUB_API_URL,
     GITHUB_BRANCH,
@@ -73,6 +75,9 @@ def render_gitops_files(
 ) -> tuple[dict[str, str], dict]:
 
     validate_payload(payload)
+
+    if payload["model_name"] == "tax-document-classifier":
+        return render_model_release_files(payload)
 
     environment = payload["environment"]
     config = ENVIRONMENTS.get(environment)
