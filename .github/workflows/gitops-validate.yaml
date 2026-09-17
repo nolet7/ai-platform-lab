@@ -7,6 +7,7 @@ on:
     paths:
       - "gitops/**"
       - "observability/**"
+      - "services/deployment-worker/**"
       - "scripts/check_gitops_secrets.py"
       - ".github/workflows/gitops-validate.yaml"
 
@@ -16,6 +17,7 @@ on:
     paths:
       - "gitops/**"
       - "observability/**"
+      - "services/deployment-worker/**"
       - "scripts/check_gitops_secrets.py"
       - ".github/workflows/gitops-validate.yaml"
 
@@ -111,3 +113,19 @@ jobs:
           fi
 
           echo "PASS: no PEM private keys detected."
+
+
+  worker-tests:
+    name: Deployment worker tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install test dependencies
+        run: python -m pip install httpx pytest
+      - name: Test deployment worker
+        working-directory: services/deployment-worker
+        run: python -m pytest -q tests

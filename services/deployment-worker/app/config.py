@@ -74,3 +74,10 @@ MLFLOW_TRACKING_URI = os.getenv(
     "MLFLOW_TRACKING_URI",
     "http://mlflow.ml-platform.svc.cluster.local:5000",
 )
+
+ARGO_API_URL = os.getenv(
+    "ARGO_API_URL",
+    "https://argocd-server.argocd.svc.cluster.local:443",
+)
+
+ARGO_API_TOKEN = os.getenv("ARGO_API_TOKEN", "")

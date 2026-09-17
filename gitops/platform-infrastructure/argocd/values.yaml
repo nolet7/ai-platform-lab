@@ -1,0 +1,31 @@
+global:
+  domain: argocd.ai-platform.local
+
+configs:
+  cm:
+    admin.enabled: true
+    url: https://argocd.ai-platform.local
+    accounts.caipe-observer: apiKey
+    accounts.caipe-observer.enabled: "true"
+  rbac:
+    policy.csv: |
+      p, role:caipe-observer, applications, get, ai-platform-dev/*, allow
+      p, role:caipe-observer, applications, get, ai-platform-staging/*, allow
+      p, role:caipe-observer, applications, get, ai-platform-prod/*, allow
+      p, role:caipe-observer, applications, get, ai-platform-ml/*, allow
+      g, caipe-observer, role:caipe-observer
+
+applicationSet:
+  replicas: 1
+controller:
+  replicas: 1
+notifications:
+  enabled: true
+redis:
+  enabled: true
+repoServer:
+  replicas: 1
+server:
+  replicas: 1
+  service:
+    type: ClusterIP

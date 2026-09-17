@@ -51,6 +51,14 @@ spec:
             - secretRef:
                 name: gitops-github-writer
 
+            - secretRef:
+                name: argocd-api-observer
+                optional: true
+
+          env:
+            - name: SSL_CERT_FILE
+              value: /etc/ai-platform-ca/ca.crt
+
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
@@ -73,6 +81,14 @@ spec:
             - name: tmp
               mountPath: /tmp
 
+            - name: argocd-api-trust
+              mountPath: /etc/ai-platform-ca
+              readOnly: true
+
       volumes:
         - name: tmp
           emptyDir: {}
+
+        - name: argocd-api-trust
+          configMap:
+            name: argocd-api-trust
