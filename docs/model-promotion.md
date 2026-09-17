@@ -1,0 +1,28 @@
+# Tax classifier model lifecycle
+
+## Candidate validation
+
+Run in Ubuntu WSL from the repository:
+
+```bash
+python3 scripts/ml-platform/validate-tax-classifier-candidate.py
+```
+
+The command resolves the live MLflow `candidate` alias, then checks that the
+registered version is READY, its source identifies an immutable logged model,
+and the logged model and registered version point to the same run. It verifies
+the source Git commit, dataset version, macro F1, and the immutable MinIO
+artifact prefix, including `MLmodel`. It prints an evidence record with the
+model ID and S3 URI. A missing alias, inconsistent lineage, inadequate metric,
+or incomplete artifact prefix fails closed.
+
+The current dataset is `synthetic-demo-v1`; its measured macro F1 of 1.0 is
+a demonstration check, not evidence of production model quality. This command
+does not approve a deployment or change a production alias. Staging and
+production promotion still require the Platform API approval workflow,
+immutable GitOps manifests, post-deploy health checks, and rollback records.
+
+The serving baseline uses the immutable model ID recorded in
+`gitops/ml-platform/tax-classifier-serving/inferenceservice.yaml`.
+Run `scripts/ml-platform/verify-tax-classifier-v2.py` after any serving
+change to verify V2 readiness and sample predictions.
