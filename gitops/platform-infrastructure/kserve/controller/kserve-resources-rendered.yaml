@@ -736,7 +736,7 @@ data:
         "domainTemplate": "{{ .Name }}-{{ .Namespace }}.{{ .IngressDomain }}",
         "pathTemplate": "",
         "urlScheme": "http",
-        "disableIstioVirtualHost": false,
+        "disableIstioVirtualHost": true,
         "disableIngressCreation": false,
         "disableHTTPRouteTimeout": false
     }
