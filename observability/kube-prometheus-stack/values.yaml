@@ -1,6 +1,11 @@
 grafana:
   enabled: true
 
+  env:
+    GF_SERVER_DOMAIN: grafana.ai-platform.local
+    GF_SERVER_ROOT_URL: https://grafana.ai-platform.local/
+    GF_SERVER_PROTOCOL: http
+
   admin:
     existingSecret: grafana-admin
     userKey: admin-user
@@ -28,6 +33,7 @@ prometheus:
   enabled: true
 
   prometheusSpec:
+    externalUrl: https://prometheus.ai-platform.local
     retention: 2d
 
     resources:
