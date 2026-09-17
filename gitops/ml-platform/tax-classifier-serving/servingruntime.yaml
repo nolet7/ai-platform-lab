@@ -1,0 +1,48 @@
+apiVersion: serving.kserve.io/v1alpha1
+kind: ServingRuntime
+metadata:
+  name: kserve-mlserver
+  labels:
+    app.kubernetes.io/name: tax-document-classifier
+    app.kubernetes.io/component: serving-runtime
+  annotations:
+    serving.kserve.io/server-type: mlserver
+spec:
+  annotations:
+    prometheus.kserve.io/path: /metrics
+    prometheus.kserve.io/port: "8082"
+  supportedModelFormats:
+    - name: mlflow
+      version: "1"
+    - name: mlflow
+      version: "2"
+  protocolVersions:
+    - v2
+  containers:
+    - name: kserve-container
+      image: ai-platform-tax-classifier-mlserver:1.7.1-mlflow3.16.0-r3
+      imagePullPolicy: IfNotPresent
+      env:
+        - name: MLSERVER_MODEL_IMPLEMENTATION
+          value: "{{.Labels.modelClass}}"
+        - name: MLSERVER_HTTP_PORT
+          value: "8080"
+        - name: MLSERVER_GRPC_PORT
+          value: "9000"
+        - name: MODELS_DIR
+          value: /mnt/models
+      resources:
+        requests:
+          cpu: 100m
+          memory: 512Mi
+        limits:
+          cpu: "1"
+          memory: 2Gi
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+            - ALL
+        privileged: false
+        runAsNonRoot: true
+        runAsUser: 10001

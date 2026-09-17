@@ -1,0 +1,30 @@
+apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  name: tax-document-classifier
+  annotations:
+    serving.kserve.io/deploymentMode: Standard
+    serving.kserve.io/secretName: tax-classifier-s3
+    ai-platform.io/runtime-image: 1.7.1-mlflow3.16.0-r3
+  labels:
+    app.kubernetes.io/name: tax-document-classifier
+    app.kubernetes.io/component: serving
+    app.kubernetes.io/managed-by: argocd
+    ai-platform.io/model-version: "1"
+    ai-platform.io/model-id: m-021e2255280449de897f0b2981283d79
+spec:
+  predictor:
+    serviceAccountName: tax-classifier-serving
+    model:
+      modelFormat:
+        name: mlflow
+      runtime: kserve-mlserver
+      protocolVersion: v2
+      storageUri: s3://mlflow-artifacts/2/models/m-021e2255280449de897f0b2981283d79/artifacts
+      resources:
+        requests:
+          cpu: 100m
+          memory: 512Mi
+        limits:
+          cpu: "1"
+          memory: 2Gi
