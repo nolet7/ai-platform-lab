@@ -296,4 +296,4 @@ Evidence key: **R** = docs/platform-audit.md; docs/model-promotion.md; docs/kser
 
 ## Next smallest safe unit
 
-The inference metrics and alert unit is complete: PodMonitor target up=1, four alert rules loaded, KServe V2 health and three predictions pass. Next, replace the worker generic nginx output with an approval-bound immutable staging model release, then implement production promotion and rollback.
+The inference metrics and alert unit is complete: PodMonitor target up=1, four alert rules loaded, KServe V2 health and three predictions pass. The worker now reaches MLflow through a scoped GitOps NetworkPolicy; a live version 1 lookup returned READY. Next, replace the worker generic nginx output with an approval-bound immutable staging model release, then implement production promotion and rollback.

@@ -26,3 +26,11 @@ The serving baseline uses the immutable model ID recorded in
 `gitops/ml-platform/tax-classifier-serving/inferenceservice.yaml`.
 Run `scripts/ml-platform/verify-tax-classifier-v2.py` after any serving
 change to verify V2 readiness and sample predictions.
+
+## Worker registry connectivity
+
+The deployment worker has a scoped NetworkPolicy egress rule to the MLflow
+pod on TCP 5000 and receives the in-cluster tracking URI from its ConfigMap.
+On 2026-09-17 a live lookup of registered model version 1 from the worker
+returned READY. This is a prerequisite for immutable release resolution; the
+worker still renders a generic Deployment and does not yet promote a model.
