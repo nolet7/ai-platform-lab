@@ -1,0 +1,69 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: tax-classifier-serving
+  labels:
+    release: kube-prometheus-stack
+    app.kubernetes.io/name: tax-document-classifier
+spec:
+  groups:
+    - name: tax-classifier-serving.rules
+      rules:
+        - alert: TaxClassifierServingDown
+          expr: |
+            absent(up{namespace="ml-platform",pod=~"tax-document-classifier-predictor-.*"})
+            or max(up{namespace="ml-platform",pod=~"tax-document-classifier-predictor-.*"}) == 0
+          for: 2m
+          labels:
+            severity: critical
+            service: tax-document-classifier
+          annotations:
+            summary: Tax classifier serving metrics are unavailable
+            description: Check the KServe InferenceService, predictor pod, and PodMonitor.
+        - alert: TaxClassifierHighInferenceErrorRate
+          expr: |
+            sum(rate(model_infer_request_failure_total{namespace="ml-platform",model="tax-document-classifier"}[5m]))
+            /
+            clamp_min(
+              sum(rate(model_infer_request_failure_total{namespace="ml-platform",model="tax-document-classifier"}[5m]))
+              + sum(rate(model_infer_request_success_total{namespace="ml-platform",model="tax-document-classifier"}[5m])),
+              0.001
+            ) > 0.05
+          for: 5m
+          labels:
+            severity: warning
+            service: tax-document-classifier
+          annotations:
+            summary: Tax classifier inference error rate exceeds 5 percent
+            description: Inspect MLServer logs, model artifacts, and recent GitOps changes.
+        - alert: TaxClassifierHighInferenceLatency
+          expr: |
+            histogram_quantile(
+              0.95,
+              sum by (le) (
+                rate(rest_server_request_duration_seconds_bucket{
+                  namespace="ml-platform",
+                  path="/v2/models/{model_name}/infer"
+                }[5m])
+              )
+            ) > 0.5
+          for: 5m
+          labels:
+            severity: warning
+            service: tax-document-classifier
+          annotations:
+            summary: Tax classifier p95 inference latency exceeds 500 ms
+            description: Inspect predictor CPU, memory, queueing, and request volume.
+        - alert: TaxClassifierPredictorRestarted
+          expr: |
+            sum(increase(kube_pod_container_status_restarts_total{
+              namespace="ml-platform",
+              pod=~"tax-document-classifier-predictor-.*"
+            }[15m])) > 0
+          for: 1m
+          labels:
+            severity: warning
+            service: tax-document-classifier
+          annotations:
+            summary: Tax classifier predictor restarted
+            description: Inspect pod events and MLServer logs for load or runtime failures.

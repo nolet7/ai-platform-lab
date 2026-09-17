@@ -22,6 +22,10 @@ spec:
     - name: kserve-container
       image: ai-platform-tax-classifier-mlserver:1.7.1-mlflow3.16.0-r3
       imagePullPolicy: IfNotPresent
+      ports:
+        - name: metrics
+          containerPort: 8082
+          protocol: TCP
       env:
         - name: MLSERVER_MODEL_IMPLEMENTATION
           value: "{{.Labels.modelClass}}"

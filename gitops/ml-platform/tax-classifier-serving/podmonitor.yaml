@@ -1,0 +1,15 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: tax-classifier-mlserver
+  labels:
+    release: kube-prometheus-stack
+    app.kubernetes.io/name: tax-document-classifier
+spec:
+  selector:
+    matchLabels:
+      serving.kserve.io/inferenceservice: tax-document-classifier
+  podMetricsEndpoints:
+    - port: metrics
+      path: /metrics
+      interval: 30s
