@@ -50,6 +50,18 @@ spec:
         - protocol: TCP
           port: 53
 
+    # Read model registry metadata before writing an immutable release
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ml-platform
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: mlflow
+      ports:
+        - protocol: TCP
+          port: 5000
+
     # Allow outbound HTTPS for GitHub GitOps publishing
     - to:
         - ipBlock:
