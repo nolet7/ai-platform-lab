@@ -44,3 +44,5 @@ spec:
                   type: string
                 storagePhase:
                   type: string
+                initJobName:
+                  type: string
