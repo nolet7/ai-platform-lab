@@ -1,0 +1,29 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+
+metadata:
+  name: platform-kserve-controller
+  namespace: argocd
+
+  annotations:
+    argocd.argoproj.io/sync-wave: "-10"
+
+spec:
+  project: ai-platform-infrastructure
+
+  source:
+    repoURL: https://github.com/nolet7/ai-platform-lab.git
+    targetRevision: main
+    path: gitops/platform-infrastructure/kserve/controller
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kserve
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+
+    syncOptions:
+      - ServerSideApply=true
