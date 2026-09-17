@@ -14,6 +14,8 @@ spec:
 
   template:
     metadata:
+      annotations:
+        platform.ai/config-revision: oidc-clean-issuer-2026-09-17
       labels:
         app: platform-api
 
