@@ -1,0 +1,38 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: ai-platform-edge
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-40"
+spec:
+  description: TLS certificates and external ingress for AI Platform services
+
+  sourceRepos:
+    - https://github.com/nolet7/ai-platform-lab.git
+
+  destinations:
+    - namespace: ai-platform
+      server: https://kubernetes.default.svc
+
+    - namespace: argocd
+      server: https://kubernetes.default.svc
+
+    - namespace: security
+      server: https://kubernetes.default.svc
+
+    - namespace: ml-platform
+      server: https://kubernetes.default.svc
+
+    - namespace: observability
+      server: https://kubernetes.default.svc
+
+  namespaceResourceWhitelist:
+    - group: networking.k8s.io
+      kind: Ingress
+
+    - group: cert-manager.io
+      kind: Certificate
+
+  orphanedResources:
+    warn: true

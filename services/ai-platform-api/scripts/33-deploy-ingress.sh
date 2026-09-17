@@ -27,7 +27,7 @@ if ! kubectl get secret ai-platform-api-tls \
 then
     echo "ERROR: TLS secret not found."
     echo "Run:"
-    echo "./scripts/32-create-tls.sh"
+    echo "Wait for cert-manager Certificate/ai-platform-api-tls to become Ready."
     exit 1
 fi
 

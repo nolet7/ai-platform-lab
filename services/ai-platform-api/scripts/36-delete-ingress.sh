@@ -8,11 +8,6 @@ kubectl delete \
   -k k8s/ingress \
   --ignore-not-found=true
 
-kubectl delete secret \
-  ai-platform-api-tls \
-  -n ai-platform \
-  --ignore-not-found=true
-
 echo
 echo "Phase 2N application ingress deleted."
 echo

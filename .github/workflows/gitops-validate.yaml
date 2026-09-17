@@ -1,0 +1,113 @@
+name: GitOps Validation
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "gitops/**"
+      - "observability/**"
+      - "scripts/check_gitops_secrets.py"
+      - ".github/workflows/gitops-validate.yaml"
+
+  push:
+    branches:
+      - main
+    paths:
+      - "gitops/**"
+      - "observability/**"
+      - "scripts/check_gitops_secrets.py"
+      - ".github/workflows/gitops-validate.yaml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gitops-validation-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate GitOps
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: "v1.37.0"
+
+      - name: Check changed-file whitespace
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            git diff --check \
+              "${{ github.event.pull_request.base.sha }}...${{ github.sha }}"
+          else
+            git diff-tree --check -r "${{ github.sha }}"
+          fi
+
+      - name: Validate all GitOps Kustomizations
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          count=0
+
+          while IFS= read -r -d '' file; do
+            directory="$(dirname "${file}")"
+
+            echo "::group::kubectl kustomize ${directory}"
+            kubectl kustomize "${directory}" >/dev/null
+            echo "::endgroup::"
+
+            count=$((count + 1))
+          done < <(
+            find gitops observability \
+              -type f \
+              -name kustomization.yaml \
+              -print0
+          )
+
+          if [[ "${count}" -eq 0 ]]; then
+            echo "ERROR: no Kustomizations found"
+            exit 1
+          fi
+
+          echo "Validated ${count} Kustomization directories."
+
+      - name: Validate YAML and reject inline Secret payloads
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m venv /tmp/gitops-validation
+          /tmp/gitops-validation/bin/pip install --disable-pip-version-check PyYAML==6.0.3
+          /tmp/gitops-validation/bin/python scripts/check_gitops_secrets.py
+      - name: Reject committed PEM private keys
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          prefix='-----BEGIN '
+          suffix='(RSA |EC |OPENSSH )?PRIVATE KEY-----'
+          pattern="${prefix}${suffix}"
+
+          if git grep -nE \
+            "${pattern}" \
+            -- . \
+            ':!.github/workflows/gitops-validate.yaml'
+          then
+            echo "ERROR: private key material detected in Git."
+            exit 1
+          fi
+
+          echo "PASS: no PEM private keys detected."
