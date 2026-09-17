@@ -1,0 +1,46 @@
+apiVersion: apiextensions.crossplane.io/v2
+kind: CompositeResourceDefinition
+metadata:
+  name: modelworkspaces.platform.ai
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  scope: Namespaced
+  group: platform.ai
+  names:
+    kind: ModelWorkspace
+    plural: modelworkspaces
+  versions:
+    - name: v1alpha1
+      served: true
+      referenceable: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              required:
+                - modelName
+                - environment
+                - storage
+              properties:
+                modelName:
+                  type: string
+                  minLength: 1
+                environment:
+                  type: string
+                  enum:
+                    - dev
+                    - staging
+                    - prod
+                storage:
+                  type: string
+                  pattern: '^[1-9][0-9]*(Mi|Gi)$'
+            status:
+              type: object
+              properties:
+                pvcName:
+                  type: string
+                storagePhase:
+                  type: string

@@ -1,0 +1,74 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: model-workspace-local
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  compositeTypeRef:
+    apiVersion: platform.ai/v1alpha1
+    kind: ModelWorkspace
+  mode: Pipeline
+  pipeline:
+    - step: create-local-workspace
+      functionRef:
+        name: function-patch-and-transform
+      input:
+        apiVersion: pt.fn.crossplane.io/v1beta1
+        kind: Resources
+        resources:
+          - name: storage
+            base:
+              apiVersion: v1
+              kind: PersistentVolumeClaim
+              spec:
+                accessModes:
+                  - ReadWriteOnce
+                storageClassName: standard
+                resources:
+                  requests:
+                    storage: 1Gi
+            patches:
+              - type: FromCompositeFieldPath
+                fromFieldPath: metadata.name
+                toFieldPath: metadata.name
+                transforms:
+                  - type: string
+                    string:
+                      type: Format
+                      fmt: "%s-data"
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.storage
+                toFieldPath: spec.resources.requests.storage
+              - type: ToCompositeFieldPath
+                fromFieldPath: metadata.name
+                toFieldPath: status.pvcName
+              - type: ToCompositeFieldPath
+                fromFieldPath: status.phase
+                toFieldPath: status.storagePhase
+            readinessChecks:
+              - type: MatchString
+                fieldPath: status.phase
+                matchString: Bound
+          - name: metadata
+            base:
+              apiVersion: v1
+              kind: ConfigMap
+              data: {}
+            patches:
+              - type: FromCompositeFieldPath
+                fromFieldPath: metadata.name
+                toFieldPath: metadata.name
+                transforms:
+                  - type: string
+                    string:
+                      type: Format
+                      fmt: "%s-info"
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.modelName
+                toFieldPath: data.modelName
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.environment
+                toFieldPath: data.environment
+            readinessChecks:
+              - type: None

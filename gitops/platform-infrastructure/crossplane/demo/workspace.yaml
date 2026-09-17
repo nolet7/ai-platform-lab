@@ -1,0 +1,12 @@
+apiVersion: platform.ai/v1alpha1
+kind: ModelWorkspace
+metadata:
+  name: tax-classifier-demo
+  namespace: ai-platform-dev
+spec:
+  modelName: tax-document-classifier
+  environment: dev
+  storage: 1Gi
+  crossplane:
+    compositionRef:
+      name: model-workspace-local
