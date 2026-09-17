@@ -1,0 +1,17 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - api.yaml
+  - argocd.yaml
+  - keycloak.yaml
+  - mlflow.yaml
+  - grafana.yaml
+  - prometheus.yaml
+  - tax-classifier.yaml
+
+labels:
+  - pairs:
+      app.kubernetes.io/part-of: ai-platform
+      app.kubernetes.io/managed-by: argocd
+      platform.ai/component: edge
