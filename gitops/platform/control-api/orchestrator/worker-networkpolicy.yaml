@@ -70,3 +70,16 @@ spec:
       ports:
         - protocol: TCP
           port: 443
+
+
+    # Read only the Argo CD Application that this worker published.
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: argocd
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: argocd-server
+      ports:
+        - protocol: TCP
+          port: 8080

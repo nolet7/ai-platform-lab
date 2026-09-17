@@ -23,3 +23,12 @@ labels:
   - pairs:
       app.kubernetes.io/part-of: ai-platform-control-plane
       app.kubernetes.io/managed-by: argocd
+
+
+configMapGenerator:
+  - name: argocd-api-trust
+    files:
+      - ca.crt=ai-platform-root-ca.crt
+
+generatorOptions:
+  disableNameSuffixHash: true
