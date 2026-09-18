@@ -567,7 +567,7 @@ def list_pending_argo_jobs(limit: int = 25) -> list[dict]:
             observed = result.get("argocd") or {}
             gitops = result.get("gitops") or {}
             if (
-                observed.get("revision_observed")
+                observed.get("revision_applied")
                 and observed.get("sync_status") == "Synced"
                 and observed.get("health_status") == "Healthy"
             ):
@@ -608,29 +608,34 @@ def record_argo_observation(job_id: UUID, observation: dict) -> None:
         if deployment is None:
             return
         job.result_payload = {**result, "argocd": observation}
-        healthy = (
-            observation.get("revision_observed") is True
+        applied_healthy = (
+            observation.get("revision_applied") is True
             and observation.get("sync_status") == "Synced"
             and observation.get("health_status") == "Healthy"
         )
-        if healthy:
-            deployment.execution_status = "healthy"
+        if applied_healthy:
+            current = observation.get("revision_observed") is True
+            deployment.execution_status = "healthy" if current else "deployed"
             deployment.execution_message = (
-                "Argo CD and model release are Synced/Healthy at "
-                + gitops["commit_sha"][:12]
-            )
+                "Argo CD Synced/Healthy at requested commit "
+                if current else "Requested commit applied; Argo now tracks newer revision "
+            ) + gitops["commit_sha"][:12]
             if not (
-                previous.get("revision_observed") is True
+                previous.get("revision_applied") is True
                 and previous.get("sync_status") == "Synced"
                 and previous.get("health_status") == "Healthy"
             ):
                 _audit(
                     session=session,
                     deployment=deployment,
-                    event_type="deployment.execution.healthy",
+                    event_type=(
+                        "deployment.execution.healthy"
+                        if current else "deployment.execution.deployed"
+                    ),
                     event_data={
                         "application": observation["application"],
                         "commit_sha": gitops["commit_sha"],
+                        "current_revision": observation.get("observed_revision"),
                         "sync_status": "Synced",
                         "health_status": "Healthy",
                     },
