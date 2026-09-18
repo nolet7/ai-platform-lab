@@ -66,6 +66,20 @@ ml-platform get modelworkspace tax-document-classifier-tax-ml-team-staging`
 show reconciler state. In the portal, sign in with a tenant account to view
 the request, policy decision, Argo/Crossplane status and audit events.
 
+Loki ingested API access, Argo A2A completion, Crossplane A2A completion,
+and Crossplane MCP tool lines for the same request. In Grafana Explore use
+this LogQL query (adjust the request ID for another run):
+
+```logql
+{namespace="ai-platform"} |= "5e6ed6ca-8af0-4cd1-9398-ac1ab49daf8a"
+```
+
+The query returned streams from `platform-api`, `caipe-argo-agent` and
+`caipe-crossplane-agent` on 2026-09-18. The agent logs also include the
+correlation ID. Tempo's search API was reachable, but no CAIPE trace was
+found. End-to-end distributed tracing for this workflow remains to be
+instrumented and verified; log correlation is the currently tested path.
+
 ## Recovery and rollback boundaries
 
 If an agent is unavailable, preserve the Git commit and request ID. Restore

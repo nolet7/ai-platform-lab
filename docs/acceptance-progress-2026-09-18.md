@@ -69,6 +69,9 @@ reported `healthy` and "Argo CD and Crossplane are ready". The serving
 Application is Synced/Healthy and both agent logs recorded completed tasks
 with that request ID as correlation ID. See `docs/caipe-architecture.md` for
 the protocol, authorization and recovery path.
+Loki returned API and agent logs for that request ID; Tempo returned no
+CAIPE trace from the search checked. Distributed trace correlation remains
+open.
 
 ## Requirements and evidence
 
@@ -81,7 +84,7 @@ the protocol, authorization and recovery path.
 | Platform API | Verified for demo | `services/platform-api/` | Create, submit, approve, list, detail, and audit requests returned expected results |
 | MLflow registry and immutable model | Verified for demo | `services/deployment-worker/app/model_registry.py` | Worker resolved version 1 and wrote immutable lineage |
 | KServe serving and inference | Verified | `gitops/ml-platform/releases/` | Tenant InferenceService Ready; three sample predictions passed |
-| Observability and ownership | Partially verified | `observability/`, `platform-monitoring` | Grafana datasources and 25/25 Prometheus targets verified earlier; demo trace-to-audit correlation not yet tested |
+| Observability and ownership | Partially verified | `observability/`, `platform-monitoring`, `docs/caipe-architecture.md` | Grafana datasources and 25/25 Prometheus targets verified earlier; Loki returned API, A2A and MCP logs for the same request ID; CAIPE distributed traces remain unverified |
 | CI | Verified | `.github/workflows/gitops-validate.yaml` | PR #10 worker, API/portal, GitOps checks passed |
 | Argo real API integration | Verified | `services/caipe-agent/app/argo_rest.py` | Agent's restricted account read deployment app; control-plane app denied; live TLS and revision/history checks passed |
 | Crossplane request workflow | Verified for staging demo | `services/deployment-worker/app/model_release_writer.py`, `services/caipe-agent/app/argo_rest.py`, `gitops/platform-infrastructure/crossplane/` | Request-linked XR Synced/Ready, PVC Bound, Job Complete; agent status and infrastructure audit persisted |
