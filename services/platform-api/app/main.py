@@ -1,14 +1,18 @@
 import logging
+from pathlib import Path
 from uuid import UUID
 
 from fastapi import (
     Depends,
+    Query,
     FastAPI,
     HTTPException,
     status,
 )
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from .database import (
     database_is_ready,
@@ -16,6 +20,7 @@ from .database import (
 )
 from .models import (
     ApprovalDecision,
+    AuditEventView,
     DeploymentAccepted,
     DeploymentRequest,
     DeploymentStatus,
@@ -28,6 +33,9 @@ from .repository import (
     create_deployment_with_audit,
     decide_deployment,
     get_deployment,
+    list_deployments,
+    get_audit_events,
+    get_job_result,
     submit_for_approval,
 )
 from .security import (
@@ -334,12 +342,74 @@ def read_deployment(
             principal=principal,
         )
 
-        return deployment_response(
-            deployment
-        )
+        response = deployment_response(deployment)
+        response.orchestration = get_job_result(db, request_id)
+        return response
 
     except (
         DeploymentNotFound,
         TenantAccessDenied,
     ) as error:
         translate_workflow_error(error)
+
+
+
+@app.get("/deployments", response_model=list[DeploymentStatus])
+def read_deployments(
+    limit: int = Query(default=50, ge=1, le=100),
+    principal: Principal = Depends(require_any_role(
+        "viewer", "data-scientist", "ml-engineer", "platform-engineer", "approver"
+    )),
+    db: Session = Depends(get_db),
+):
+    try:
+        records = list_deployments(db, principal, limit)
+        return [deployment_response(record) for record in records]
+    except SQLAlchemyError:
+        raise HTTPException(status_code=503, detail="Database unavailable")
+
+
+@app.get("/deployments/{request_id}/audit", response_model=list[AuditEventView])
+def read_audit(
+    request_id: UUID,
+    principal: Principal = Depends(require_any_role(
+        "viewer", "data-scientist", "ml-engineer", "platform-engineer", "approver"
+    )),
+    db: Session = Depends(get_db),
+):
+    try:
+        events = get_audit_events(db, request_id, principal)
+        return [
+            AuditEventView(
+                event_type=event.event_type,
+                actor=event.actor,
+                tenant_id=event.tenant_id,
+                event_data=event.event_data,
+                created_at=event.created_at.isoformat(),
+            )
+            for event in events
+        ]
+    except (DeploymentNotFound, TenantAccessDenied) as error:
+        translate_workflow_error(error)
+    except SQLAlchemyError:
+        raise HTTPException(status_code=503, detail="Database unavailable")
+
+
+PORTAL_DIR = Path(__file__).resolve().parent / "portal"
+app.mount("/portal/assets", StaticFiles(directory=PORTAL_DIR), name="portal-assets")
+
+
+@app.get("/portal")
+@app.get("/portal/")
+def portal_home():
+    return FileResponse(
+        PORTAL_DIR / "index.html",
+        headers={
+            "Content-Security-Policy": (
+                "default-src 'none'; script-src 'self'; style-src 'self'; "
+                "connect-src 'self' https://keycloak.ai-platform.local; "
+                "form-action 'none'; base-uri 'none'; frame-ancestors 'none'"
+            ),
+            "Cache-Control": "no-store",
+        },
+    )

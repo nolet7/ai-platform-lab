@@ -58,3 +58,12 @@ class DeploymentStatus(BaseModel):
     requested_by: str
     decision_by: str | None = None
     decision_reason: str | None = None
+    orchestration: dict | None = None
+
+
+class AuditEventView(BaseModel):
+    event_type: str
+    actor: str
+    tenant_id: str
+    event_data: dict
+    created_at: str
