@@ -30,7 +30,7 @@ spec:
 
       containers:
         - name: worker
-          image: ai-platform-deployment-worker:0.3.6
+          image: ai-platform-deployment-worker:0.3.7
           imagePullPolicy: IfNotPresent
 
           command:
