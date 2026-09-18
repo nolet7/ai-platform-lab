@@ -3,6 +3,7 @@ kind: Kustomization
 
 resources:
   - api.yaml
+  - portal.yaml
   - argocd.yaml
   - keycloak.yaml
   - mlflow.yaml
