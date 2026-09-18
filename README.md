@@ -1,73 +1,173 @@
 # AI Platform Lab
 
-Local enterprise AI/ML deployment control plane on Windows 10, WSL2,
-KIND, Kubernetes, Argo CD, Keycloak, MLflow, KServe, Crossplane, and
-Prometheus/Grafana. The authoritative repository lives at
-`/home/lateef/ai-platform-lab` in Ubuntu WSL.
+A local, GitOps-managed AI/ML deployment platform. A requester selects an
+immutable model version in the self-service portal, a different user approves
+it, and the control plane publishes Kubernetes desired state to Git. Argo CD
+reconciles a KServe release and a Crossplane workspace. The portal shows the
+request, audit trail, and observed deployment state.
 
-The platform is operational, but the full agentic control-plane design
-is still in progress. See the
-[acceptance report](docs/acceptance-progress-2026-09-18.md) for verified
-results and open requirements.
+The authoritative checkout is `/home/lateef/ai-platform-lab` in Ubuntu WSL.
+The deployment runs on a three-node KIND cluster on one Windows machine. The
+`*.ai-platform.local` addresses below resolve only on that machine.
 
-## Deployment flow
+## Current scope
+
+- **Control plane:** portal and FastAPI API, PostgreSQL, Redis dispatcher and
+  worker, Keycloak OIDC login with PKCE, tenant-aware authorization, and
+  separate requester/approver identities.
+- **Model path:** MLflow registry with MinIO artifacts, a trained tax document
+  classifier, GitOps release manifests, KServe inference, and a Crossplane
+  `ModelWorkspace` backed by a local PVC and initializer Job.
+- **Reconciliation:** Argo CD root and child Applications manage platform,
+  security, ML, monitoring, and environment resources.
+- **Agent observation:** the worker and dispatcher use a CAIPE supervisor.
+  Purpose-specific Argo and Crossplane agents expose authenticated A2A v1
+  JSON-RPC tasks and invoke scoped MCP tools to read the real Argo CD API.
+- **Operations:** nginx ingress, cert-manager private CA, Prometheus, Grafana,
+  Loki, and Tempo. Request IDs correlate audit records and logs.
+
+Development and staging releases have completed the request-to-inference path.
+The [acceptance checkpoint](docs/acceptance-progress-2026-09-18.md) records
+evidence and remaining gaps. Distributed CAIPE tracing, automated rollback,
+and some security and failure-path audits remain open.
+
+## Local URLs and access
+
+Windows hosts entries map these names to `127.0.0.1`. Windows ports 80 and
+443 forward to WSL ports 18088 and 18443, which forward to the shared ingress.
+The local CA is trusted in Windows. These URLs are not public.
+
+| Service | URL | Access |
+|---|---|---|
+| Self-service portal | <https://api.ai-platform.local/portal/> | Keycloak demo requester or approver |
+| Platform API | <https://api.ai-platform.local/> | Public health endpoint; bearer token for protected endpoints |
+| Argo CD | <https://argocd.ai-platform.local/> | Argo CD administrator |
+| Keycloak | <https://keycloak.ai-platform.local/> | Identity service |
+| Keycloak admin console | <https://keycloak.ai-platform.local/admin/master/console/> | Keycloak administrator |
+| MLflow | <https://mlflow.ai-platform.local/> | Local lab UI |
+| Grafana | <https://grafana.ai-platform.local/> | Grafana administrator |
+| Prometheus | <https://prometheus.ai-platform.local/> | Local lab UI |
+| Tax classifier | <https://tax-classifier.ai-platform.local/> | KServe inference API, not a login page |
+
+The demo accounts are `demo-requester` and `demo-approver`. Their passwords
+are stored outside Git at
+`C:\Users\user\Downloads\ai-platform-demo-credentials.txt`. Argo CD,
+Grafana, and Keycloak administrator credentials are stored in their respective
+Kubernetes bootstrap Secrets. Never copy them into this repository. See the
+[demo runbook](docs/demo-runbook.md) for the sign-in and approval sequence.
+
+## Request-to-deployment flow
 
 ```mermaid
 flowchart LR
-  User --> Portal[Self-service portal]
-  Portal --> API[Control API]
-  API --> DB[(PostgreSQL)]
-  API --> Approval[Separate approver]
-  Approval --> Dispatcher[Deployment dispatcher]
-  Dispatcher --> Worker[Deployment worker]
-  Worker --> MLflow[MLflow registry]
-  Worker --> Git[GitOps commit]
-  Git --> Argo[Argo CD]
-  Argo --> KServe[KServe release]
-  Argo --> Crossplane[Request-linked Crossplane workspace]
-  Worker --> ArgoAPI[Scoped Argo REST API]
-  ArgoAPI --> DB
-  DB --> Portal
+  U[Requester] --> P[Portal]
+  P --> A[Platform API and PostgreSQL]
+  V[Separate approver] --> P
+  A --> Q[Redis dispatcher and worker]
+  Q --> M[MLflow registry]
+  Q --> G[GitOps commit]
+  G --> R[Argo CD]
+  R --> K[KServe InferenceService]
+  R --> X[Crossplane ModelWorkspace]
+  Q --> S[CAIPE supervisor]
+  S --> AA[Argo A2A/MCP agent]
+  S --> CA[Crossplane A2A/MCP agent]
+  AA --> R
+  CA --> R
+  S --> A
 ```
 
-The Argo observer uses a read-only local account and trusted internal
-TLS. Approved KServe releases include a request-linked Crossplane
-workspace. Its local Composition provisions a PVC and initializer Job.
-The dispatcher observes its Ready status through the scoped Argo API.
-A CAIPE supervisor, A2A wire protocol, MCP tools, and rollback flow remain open.
+1. Sign in as `demo-requester` and create a request for
+   `tax-document-classifier`, immutable version `1`, in `dev` or
+   `staging`.
+2. Submit it. Sign out, then sign in as `demo-approver` and approve with a
+   reason. The API rejects self-approval.
+3. The worker resolves the registered model and commits the KServe release
+   and request-linked workspace to Git. Argo CD reconciles them.
+4. The agents read Argo and Crossplane state through scoped, authenticated
+   tools. Refresh the portal to see status and audit events.
+5. Confirm the serving Application is Synced/Healthy and the
+   InferenceService is Ready before treating the model as serving.
 
-## Local URLs
+Read the [portal guide](docs/self-service-portal.md),
+[CAIPE design](docs/caipe-architecture.md),
+[Argo observer](docs/argo-api-integration.md), and
+[Crossplane guide](docs/crossplane-local.md) for component details.
 
-All names resolve to `127.0.0.1` on Windows through the single ingress
-bridge. The local CA is trusted in Windows; `curl.exe --ssl-no-revoke`
-is used for this private CA because it does not publish revocation data.
+## Repository map
 
-| Service | URL |
+| Path | Purpose |
 |---|---|
-| Self-service portal and control API | https://api.ai-platform.local/portal/ |
-| Inference API | https://api.ai-platform.local/ |
-| Argo CD | https://argocd.ai-platform.local/ |
-| Keycloak | https://keycloak.ai-platform.local/ |
-| MLflow | https://mlflow.ai-platform.local/ |
-| Grafana | https://grafana.ai-platform.local/ |
-| Prometheus | https://prometheus.ai-platform.local/ |
-| Tax classifier | https://tax-classifier.ai-platform.local/ |
+| `infra/kind/` | KIND cluster configuration |
+| `infra/terraform/`, `automation/ansible/` | Infrastructure and host automation |
+| `gitops/argocd/` | Root Application, projects, and child Applications |
+| `gitops/platform/`, `gitops/platform-edge/` | Control plane and HTTPS routes |
+| `gitops/platform-infrastructure/` | Argo, cert-manager, PKI, Crossplane, and KServe |
+| `gitops/ml-platform/`, `gitops/security/` | Registry, serving, and identity |
+| `services/platform-api/` | Portal, authentication, API, persistence, and audit |
+| `services/deployment-worker/` | Dispatcher, release writer, and CAIPE supervisor |
+| `services/caipe-agent/` | A2A agents and MCP tools |
+| `services/tax-document-classifier/` | Training and inference implementation |
+| `observability/` | Monitoring configuration |
+| `scripts/`, `docs/` | Bootstrap, validation, runbooks, and evidence |
 
-The shared WSL ingress forwards use ports `18088` and `18443`;
-Windows portproxy maps ports `80` and `443` to them. Do not add a
-per-service forward for normal operation.
+## Operate the existing deployment
 
-## Change workflow
+Run Kubernetes commands from the authoritative Ubuntu WSL checkout:
 
-1. Create a `codex/` feature branch from `main`.
-2. Render affected Kustomizations and run relevant Python tests.
-3. Open a PR. CI checks GitOps YAML, secrets, whitespace, and service tests.
-4. Merge after CI passes. Argo reconciles the Git state.
-5. Validate the live service and record evidence in the acceptance report.
+```bash
+cd /home/lateef/ai-platform-lab
+kubectl config current-context
+kubectl get nodes
+kubectl get applications.argoproj.io -n argocd
+kubectl get pods -A --field-selector=status.phase!=Running,status.phase!=Succeeded
+kubectl get inferenceservice -n ml-platform
+```
 
-Use GitOps for durable Kubernetes settings. Existing bootstrap credentials
-and the local CA private key stay outside Git. See
-[the Argo API integration](docs/argo-api-integration.md),
-[the portal](docs/self-service-portal.md),
-[Crossplane local design](docs/crossplane-local.md), and
-[the demo runbook](docs/demo-runbook.md).
+The expected context is `kind-ai-platform`. Applications should be
+Synced/Healthy and the relevant InferenceService should be Ready. A
+`No resources found` result from the non-running-pod query is normal.
+
+The shared WSL ingress forward is a runtime process. If browser URLs stop
+responding after WSL or Windows restarts, inspect it and restart if absent:
+
+```bash
+ss -ltnp | grep -E ':(18088|18443) '
+nohup kubectl -n ingress-nginx port-forward --address 0.0.0.0 \
+  service/ingress-nginx-controller 18088:80 18443:443 \
+  >/tmp/ai-platform-ingress-forward.log 2>&1 </dev/null &
+```
+
+On Windows, `netsh interface portproxy show v4tov4` should show
+`127.0.0.1:80 -> 127.0.0.1:18088` and
+`127.0.0.1:443 -> 127.0.0.1:18443`. Do not start a second forward if
+the ports already listen. For this private CA, Windows
+`curl.exe --ssl-no-revoke` verifies the chain and hostname without a
+revocation check; the CA does not publish revocation data.
+
+A fresh machine needs Windows/WSL tooling, Docker, KIND, kubectl, Helm, the
+trusted local CA, hosts entries, bootstrap Secrets, and the GitOps root
+Application. This repository has manifests and runbooks, but no one-command
+clean-room installer. See `infra/`, `gitops/argocd/root-app.yaml`, and
+the component guides before recreating the cluster. Keep bootstrap
+credentials, Argo tokens, and the CA private key out of Git.
+
+## Development and changes
+
+Create a feature branch from `main`. Render affected Kustomizations, run
+relevant service tests, and open a pull request. The
+[GitOps validation workflow](.github/workflows/gitops-validate.yaml) checks
+Kustomize rendering, YAML, secret payloads, private keys, whitespace, and
+applicable service tests. Merge after checks pass; Argo CD reconciles
+`main`. Validate the live resource and update the acceptance evidence.
+
+```bash
+git status --short --branch
+kubectl kustomize gitops/platform-edge >/dev/null
+git diff --check
+```
+
+The [2026-09-18 acceptance report](docs/acceptance-progress-2026-09-18.md)
+is the current verification snapshot. The older
+[requirements matrix](docs/requirements-matrix.md) and
+[platform audit](docs/platform-audit.md) are historical checkpoints.
