@@ -1,6 +1,5 @@
 import logging
 import time
-from uuid import uuid4
 
 from .config import (
     DISPATCH_INTERVAL_SECONDS,
@@ -14,6 +13,7 @@ from .repository import (
     mark_dispatch_error,
     mark_dispatch_intent,
 )
+from .dispatch_ids import make_rq_job_id
 from .tasks import (
     process_deployment_job,
 )
@@ -46,11 +46,7 @@ def dispatch_once():
             ):
                 continue
 
-            rq_job_id = (
-                f"deployment:"
-                f"{job_id}:"
-                f"{uuid4()}"
-            )
+            rq_job_id = make_rq_job_id(job_id)
 
             queue.enqueue(
                 process_deployment_job,
