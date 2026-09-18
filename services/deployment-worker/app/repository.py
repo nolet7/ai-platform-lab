@@ -654,7 +654,10 @@ def record_argo_observation(job_id: UUID, observation: dict) -> None:
                 )
         else:
             deployment.execution_status = "reconciling"
-            deployment.execution_message = "Waiting for Argo CD reconciliation"
+            deployment.execution_message = (
+                "Waiting for Crossplane workspace readiness"
+                if applied_healthy else "Waiting for Argo CD reconciliation"
+            )
         deployment.updated_at = utcnow()
         job.updated_at = utcnow()
         session.commit()
