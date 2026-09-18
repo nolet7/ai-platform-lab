@@ -1,0 +1,16 @@
+apiVersion: platform.ai/v1alpha1
+kind: ModelWorkspace
+metadata:
+  name: tax-document-classifier-tax-ml-team-staging
+  labels:
+    ai-platform.io/tenant: tax-ml-team
+    ai-platform.io/environment: staging
+  annotations:
+    ai-platform.io/request-id: "bac9633d-8021-42cb-93cb-ea8d5847aeb3"
+spec:
+  modelName: tax-document-classifier
+  environment: staging
+  storage: 1Gi
+  crossplane:
+    compositionRef:
+      name: model-workspace-local
