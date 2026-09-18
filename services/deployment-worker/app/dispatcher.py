@@ -2,7 +2,7 @@ import logging
 import time
 
 from .config import (
-    DISPATCH_INTERVAL_SECONDS,
+    DISPATCH_INTERVAL_SECONDS, ARGO_API_URL, ARGO_API_TOKEN, ARGO_CA_BUNDLE,
 )
 from .queue import (
     queue,
@@ -12,8 +12,11 @@ from .repository import (
     list_dispatch_candidates,
     mark_dispatch_error,
     mark_dispatch_intent,
+    list_pending_argo_jobs,
+    record_argo_observation,
 )
 from .dispatch_ids import make_rq_job_id
+from .argo_api import ArgoAPIError, inspect_application
 from .tasks import (
     process_deployment_job,
 )
@@ -72,6 +75,22 @@ def dispatch_once():
                 job_id=job_id,
                 error=str(error),
             )
+
+    for pending in list_pending_argo_jobs():
+        key = f"argo-observe:{pending['job_id']}"
+        if not redis_connection.set(key, "1", nx=True, ex=30):
+            continue
+        try:
+            observation = inspect_application(
+                pending["application"],
+                base_url=ARGO_API_URL,
+                token=ARGO_API_TOKEN,
+                expected_revision=pending["commit_sha"],
+                ca_bundle=ARGO_CA_BUNDLE,
+            )
+            record_argo_observation(pending["job_id"], observation)
+        except ArgoAPIError:
+            logger.info("Argo application %s is not readable yet", pending["application"])
 
 
 def main():

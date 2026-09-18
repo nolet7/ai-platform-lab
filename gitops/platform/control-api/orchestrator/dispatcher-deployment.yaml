@@ -28,7 +28,7 @@ spec:
 
       containers:
         - name: dispatcher
-          image: ai-platform-deployment-worker:0.3.3
+          image: ai-platform-deployment-worker:0.3.4
           imagePullPolicy: IfNotPresent
 
           command:
@@ -45,6 +45,9 @@ spec:
 
             - secretRef:
                 name: platform-queue-secret
+
+            - secretRef:
+                name: argocd-api-observer
 
           securityContext:
             allowPrivilegeEscalation: false
@@ -67,7 +70,13 @@ spec:
           volumeMounts:
             - name: tmp
               mountPath: /tmp
+            - name: argocd-api-trust
+              mountPath: /etc/ai-platform-ca
+              readOnly: true
 
       volumes:
         - name: tmp
           emptyDir: {}
+        - name: argocd-api-trust
+          configMap:
+            name: argocd-api-trust

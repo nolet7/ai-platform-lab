@@ -549,3 +549,95 @@ def complete_gitops_job(
         )
 
         session.commit()
+
+
+
+def list_pending_argo_jobs(limit: int = 25) -> list[dict]:
+    """Return recent successful GitOps writes awaiting Argo health."""
+    with SessionLocal() as session:
+        jobs = session.scalars(
+            select(DeploymentJobRecord)
+            .where(DeploymentJobRecord.status == "succeeded")
+            .order_by(DeploymentJobRecord.finished_at.desc())
+            .limit(100)
+        ).all()
+        pending = []
+        for job in jobs:
+            result = job.result_payload or {}
+            observed = result.get("argocd") or {}
+            gitops = result.get("gitops") or {}
+            if (
+                observed.get("revision_observed")
+                and observed.get("sync_status") == "Synced"
+                and observed.get("health_status") == "Healthy"
+            ):
+                continue
+            if not gitops.get("application") or not gitops.get("commit_sha"):
+                continue
+            pending.append({
+                "job_id": job.job_id,
+                "application": gitops["application"],
+                "commit_sha": gitops["commit_sha"],
+            })
+            if len(pending) >= limit:
+                break
+        return pending
+
+
+def record_argo_observation(job_id: UUID, observation: dict) -> None:
+    """Persist verified Argo status with the deployment's audit trail."""
+    with SessionLocal() as session:
+        job = session.execute(
+            select(DeploymentJobRecord)
+            .where(DeploymentJobRecord.job_id == job_id)
+            .with_for_update()
+        ).scalar_one_or_none()
+        if job is None or job.status != "succeeded":
+            return
+        result = job.result_payload or {}
+        gitops = result.get("gitops") or {}
+        if (
+            observation.get("application") != gitops.get("application")
+            or observation.get("expected_revision") != gitops.get("commit_sha")
+        ):
+            return
+        previous = result.get("argocd") or {}
+        if previous == observation:
+            return
+        deployment = session.get(DeploymentRequestRecord, job.request_id)
+        if deployment is None:
+            return
+        job.result_payload = {**result, "argocd": observation}
+        healthy = (
+            observation.get("revision_observed") is True
+            and observation.get("sync_status") == "Synced"
+            and observation.get("health_status") == "Healthy"
+        )
+        if healthy:
+            deployment.execution_status = "healthy"
+            deployment.execution_message = (
+                "Argo CD and model release are Synced/Healthy at "
+                + gitops["commit_sha"][:12]
+            )
+            if not (
+                previous.get("revision_observed") is True
+                and previous.get("sync_status") == "Synced"
+                and previous.get("health_status") == "Healthy"
+            ):
+                _audit(
+                    session=session,
+                    deployment=deployment,
+                    event_type="deployment.execution.healthy",
+                    event_data={
+                        "application": observation["application"],
+                        "commit_sha": gitops["commit_sha"],
+                        "sync_status": "Synced",
+                        "health_status": "Healthy",
+                    },
+                )
+        else:
+            deployment.execution_status = "reconciling"
+            deployment.execution_message = "Waiting for Argo CD reconciliation"
+        deployment.updated_at = utcnow()
+        job.updated_at = utcnow()
+        session.commit()
