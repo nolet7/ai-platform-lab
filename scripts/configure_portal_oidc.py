@@ -57,6 +57,7 @@ portal.update({
     "attributes": {
         **portal.get("attributes", {}),
         "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": REDIRECT,
     },
 })
 request(
@@ -80,4 +81,4 @@ for mapper in source:
         f"/admin/realms/{REALM}/clients/{portal['id']}/protocol-mappers/models",
         token, definition, method="POST",
     )
-print("Portal client configured: public PKCE, exact redirect, API audience, tenant claim")
+print("Portal client configured: public PKCE, exact sign-in/sign-out redirects, API audience, tenant claim")
