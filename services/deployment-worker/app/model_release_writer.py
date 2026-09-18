@@ -161,6 +161,24 @@ spec:
         - protocol: TCP
           port: 5000
 """
+    workspace = f"""\
+apiVersion: platform.ai/v1alpha1
+kind: ModelWorkspace
+metadata:
+  name: {release}
+  labels:
+    ai-platform.io/tenant: {tenant}
+    ai-platform.io/environment: {environment}
+  annotations:
+    ai-platform.io/request-id: "{request_id}"
+spec:
+  modelName: {name}
+  environment: {environment}
+  storage: 1Gi
+  crossplane:
+    compositionRef:
+      name: model-workspace-local
+"""
     kustomization = """\
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
@@ -168,6 +186,7 @@ namespace: ml-platform
 resources:
   - inferenceservice.yaml
   - networkpolicy.yaml
+  - workspace.yaml
 """
     app_name = f"{release}-serving"
     if len(app_name) > 63:
@@ -197,6 +216,7 @@ spec:
     files = {
         f"{root}/inferenceservice.yaml": inference,
         f"{root}/networkpolicy.yaml": policy,
+        f"{root}/workspace.yaml": workspace,
         f"{root}/kustomization.yaml": kustomization,
         f"gitops/argocd/applications/{app_name}.yaml": application,
     }
@@ -204,6 +224,7 @@ spec:
         "application": app_name,
         "namespace": namespace,
         "workload": release,
+        "workspace": release,
         "environment": environment,
         "workload_path": root,
         "model_id": model_id,
