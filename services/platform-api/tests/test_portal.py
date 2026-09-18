@@ -51,3 +51,63 @@ def test_list_endpoint_returns_db_records():
         assert response.json()[0]["model_name"] == "tax-document-classifier"
     finally:
         app.dependency_overrides.clear()
+
+
+def test_supported_request_boundary():
+    from app.models import DeploymentRequest
+    from pydantic import ValidationError
+
+    base = {
+        "tenant_id": "tax-ml-team",
+        "model_name": "tax-document-classifier",
+        "model_version": "1",
+        "environment": "dev",
+    }
+    assert DeploymentRequest(**base).environment == "dev"
+    assert DeploymentRequest(**{**base, "environment": "staging"}).environment == "staging"
+    for invalid in (
+        {"environment": "prod"},
+        {"model_name": "unregistered-model"},
+        {"model_version": "latest"},
+        {"tenant_id": "Bad_Tenant"},
+    ):
+        try:
+            DeploymentRequest(**{**base, **invalid})
+        except ValidationError:
+            pass
+        else:
+            raise AssertionError(f"unsupported request was accepted: {invalid}")
+
+
+def test_both_requester_roles_can_create():
+    for role in ("data-scientist", "ml-engineer"):
+        principal = Principal(
+            subject=role, username=role, tenant_id="tax-ml-team", roles=[role]
+        )
+        app.dependency_overrides[get_current_principal] = lambda: principal
+        app.dependency_overrides[get_db] = lambda: Mock()
+        record = SimpleNamespace(
+            request_id=uuid4(), status="draft", execution_status="not_started",
+            tenant_id="tax-ml-team", model_name="tax-document-classifier",
+            model_version="1", environment="dev", requested_by=role,
+        )
+        try:
+            with patch("app.main.create_deployment_with_audit", return_value=record):
+                response = TestClient(app).post("/deployments", json={
+                    "tenant_id": "tax-ml-team",
+                    "model_name": "tax-document-classifier",
+                    "model_version": "1",
+                    "environment": "dev",
+                })
+            assert response.status_code == 202
+            assert response.json()["requested_by"] == role
+        finally:
+            app.dependency_overrides.clear()
+
+
+def test_portal_only_offers_supported_environments():
+    client = TestClient(app)
+    html = client.get("/portal/").text
+    assert 'value="dev"' in html
+    assert 'value="staging"' in html
+    assert 'value="prod"' not in html
