@@ -50,3 +50,26 @@ def test_requires_scoped_token():
         inspect_application(
             "tax-classifier-dev", base_url=BASE, token="", expected_revision=SHA, ca_bundle="/tmp/ca.crt"
         )
+
+
+
+def test_history_proves_commit_applied_after_branch_advances():
+    response = Mock()
+    response.json.return_value = {
+        "status": {
+            "sync": {"revision": "b" * 40, "status": "Synced"},
+            "health": {"status": "Healthy"},
+            "history": [{"revision": SHA}],
+        }
+    }
+    client = Mock()
+    client.get.return_value = response
+    with patch("app.argo_api.httpx.Client") as factory:
+        factory.return_value.__enter__.return_value = client
+        result = inspect_application(
+            "tax-classifier-dev", base_url=BASE, token="test-token",
+            expected_revision=SHA, ca_bundle="/tmp/ca.crt",
+        )
+    assert result["revision_applied"] is True
+    assert result["revision_observed"] is False
+    assert result["observed_revision"] == "b" * 40

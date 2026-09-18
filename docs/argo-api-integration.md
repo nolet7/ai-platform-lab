@@ -2,11 +2,14 @@
 
 The deployment worker publishes an immutable Git commit, then the CAIPE
 Argo observer calls the real Argo CD REST API for only the application it
-published. It requests a hard refresh and records the observed revision,
-sync state, health state, and application URL in the deployment job result.
-A new application may not exist during the first query; that state is
-recorded as pending. Argo automated sync remains responsible for applying
-the Git commit.
+published. It requests a hard refresh and records the current revision, deployment
+history, sync state, health state, and application URL in the deployment job
+result. A new application may not exist during the first query; that state
+is recorded as pending. The dispatcher revisits pending observations every
+30 seconds. It records `healthy` when the requested commit is current and
+Synced/Healthy, or `deployed` when Argo history proves the commit was
+applied but a newer repository commit is current. Argo automated sync
+remains responsible for applying the Git commit.
 
 The observer uses HTTPS to the in-cluster Argo CD service. cert-manager
 issues `argocd-server-tls` with service DNS names from the local CA. The

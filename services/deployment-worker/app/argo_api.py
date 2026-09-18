@@ -43,11 +43,17 @@ def inspect_application(
     sync = status.get("sync", {})
     health = status.get("health", {})
     revision = sync.get("revision")
+    history_revisions = {
+        item.get("revision") for item in status.get("history", [])
+        if isinstance(item, dict)
+    }
+    revision_current = revision == expected_revision
     return {
         "application": application,
         "observed_revision": revision,
         "expected_revision": expected_revision,
-        "revision_observed": revision == expected_revision,
+        "revision_observed": revision_current,
+        "revision_applied": revision_current or expected_revision in history_revisions,
         "sync_status": sync.get("status", "Unknown"),
         "health_status": health.get("status", "Unknown"),
         "application_url": f"https://argocd.ai-platform.local/applications/{application}",
