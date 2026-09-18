@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: tax-document-classifier-tax-ml-team-dev-serving
+  namespace: argocd
+spec:
+  project: ai-platform-ml
+  source:
+    repoURL: https://github.com/nolet7/ai-platform-lab.git
+    targetRevision: main
+    path: gitops/ml-platform/releases/tax-document-classifier/tax-ml-team/dev
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: ml-platform
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=false
