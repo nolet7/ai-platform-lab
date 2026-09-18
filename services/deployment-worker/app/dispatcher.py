@@ -14,9 +14,10 @@ from .repository import (
     mark_dispatch_intent,
     list_pending_argo_jobs,
     record_argo_observation,
+    record_workspace_observation,
 )
 from .dispatch_ids import make_rq_job_id
-from .argo_api import ArgoAPIError, inspect_application
+from .argo_api import ArgoAPIError, inspect_application, inspect_workspace
 from .tasks import (
     process_deployment_job,
 )
@@ -89,6 +90,14 @@ def dispatch_once():
                 ca_bundle=ARGO_CA_BUNDLE,
             )
             record_argo_observation(pending["job_id"], observation)
+            if pending.get("workspace"):
+                workspace = inspect_workspace(
+                    pending["application"], pending["workspace"],
+                    pending["namespace"], pending["request_id"],
+                    base_url=ARGO_API_URL, token=ARGO_API_TOKEN,
+                    ca_bundle=ARGO_CA_BUNDLE,
+                )
+                record_workspace_observation(pending["job_id"], workspace)
         except ArgoAPIError:
             logger.info("Argo application %s is not readable yet", pending["application"])
 

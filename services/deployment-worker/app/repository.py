@@ -566,18 +566,26 @@ def list_pending_argo_jobs(limit: int = 25) -> list[dict]:
             result = job.result_payload or {}
             observed = result.get("argocd") or {}
             gitops = result.get("gitops") or {}
-            if (
+            argo_ready = (
                 observed.get("revision_applied")
                 and observed.get("sync_status") == "Synced"
                 and observed.get("health_status") == "Healthy"
-            ):
+            )
+            workspace_ready = (
+                not gitops.get("workspace")
+                or (result.get("crossplane") or {}).get("ready") is True
+            )
+            if argo_ready and workspace_ready:
                 continue
             if not gitops.get("application") or not gitops.get("commit_sha"):
                 continue
             pending.append({
                 "job_id": job.job_id,
+                "request_id": str(job.request_id),
                 "application": gitops["application"],
                 "commit_sha": gitops["commit_sha"],
+                "workspace": gitops.get("workspace"),
+                "namespace": gitops.get("namespace"),
             })
             if len(pending) >= limit:
                 break
@@ -613,7 +621,11 @@ def record_argo_observation(job_id: UUID, observation: dict) -> None:
             and observation.get("sync_status") == "Synced"
             and observation.get("health_status") == "Healthy"
         )
-        if applied_healthy:
+        workspace_ready = (
+            not gitops.get("workspace")
+            or (result.get("crossplane") or {}).get("ready") is True
+        )
+        if applied_healthy and workspace_ready:
             current = observation.get("revision_observed") is True
             deployment.execution_status = "healthy" if current else "deployed"
             deployment.execution_message = (
@@ -642,7 +654,65 @@ def record_argo_observation(job_id: UUID, observation: dict) -> None:
                 )
         else:
             deployment.execution_status = "reconciling"
-            deployment.execution_message = "Waiting for Argo CD reconciliation"
+            deployment.execution_message = (
+                "Waiting for Crossplane workspace readiness"
+                if applied_healthy else "Waiting for Argo CD reconciliation"
+            )
+        deployment.updated_at = utcnow()
+        job.updated_at = utcnow()
+        session.commit()
+
+
+def record_workspace_observation(job_id: UUID, observation: dict) -> None:
+    """Persist the request's verified Crossplane readiness and audit it once."""
+    with SessionLocal() as session:
+        job = session.execute(
+            select(DeploymentJobRecord)
+            .where(DeploymentJobRecord.job_id == job_id)
+            .with_for_update()
+        ).scalar_one_or_none()
+        if job is None or job.status != "succeeded":
+            return
+        result = job.result_payload or {}
+        gitops = result.get("gitops") or {}
+        if (
+            observation.get("application") != gitops.get("application")
+            or observation.get("workspace") != gitops.get("workspace")
+            or observation.get("namespace") != gitops.get("namespace")
+            or observation.get("request_id") != str(job.request_id)
+        ):
+            return
+        previous = result.get("crossplane") or {}
+        if previous == observation:
+            return
+        deployment = session.get(DeploymentRequestRecord, job.request_id)
+        if deployment is None:
+            return
+        job.result_payload = {**result, "crossplane": observation}
+        argo = result.get("argocd") or {}
+        argo_ready = (
+            argo.get("revision_applied") is True
+            and argo.get("sync_status") == "Synced"
+            and argo.get("health_status") == "Healthy"
+        )
+        if observation.get("ready") is True:
+            if previous.get("ready") is not True:
+                _audit(
+                    session, deployment, "deployment.infrastructure.ready",
+                    {
+                        "workspace": observation["workspace"],
+                        "pvc_name": observation.get("pvc_name"),
+                        "storage_phase": observation.get("storage_phase"),
+                        "init_job_name": observation.get("init_job_name"),
+                    },
+                )
+            if argo_ready:
+                current = argo.get("revision_observed") is True
+                deployment.execution_status = "healthy" if current else "deployed"
+                deployment.execution_message = "Argo CD and Crossplane are ready"
+        else:
+            deployment.execution_status = "reconciling"
+            deployment.execution_message = "Waiting for Crossplane workspace readiness"
         deployment.updated_at = utcnow()
         job.updated_at = utcnow()
         session.commit()
