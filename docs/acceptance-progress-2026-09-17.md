@@ -1,6 +1,6 @@
 # Platform acceptance checkpoint — 2026-09-17
 
-This is a progress record, not a declaration that the project is complete. Evidence was collected from the Windows host and the existing Ubuntu WSL KIND cluster. PR #1 remains a draft.
+Historical checkpoint. Superseded by [the 2026-09-18 report](acceptance-progress-2026-09-18.md). This is a progress record, not a declaration that the project is complete. Evidence was collected from the Windows host and the existing Ubuntu WSL KIND cluster. PR #1 remains a draft.
 
 ## Ownership and health
 
