@@ -311,3 +311,33 @@ def get_deployment(
     )
 
     return deployment
+
+
+
+def list_deployments(db: Session, principal: Principal, limit: int = 50):
+    query = select(DeploymentRequestRecord)
+    if "platform-admin" not in principal.roles:
+        query = query.where(DeploymentRequestRecord.tenant_id == principal.tenant_id)
+    return list(db.scalars(query.order_by(DeploymentRequestRecord.created_at.desc()).limit(limit)))
+
+
+def get_audit_events(db: Session, request_id: UUID, principal: Principal):
+    get_deployment(db, request_id, principal)
+    return list(db.scalars(
+        select(AuditEventRecord)
+        .where(AuditEventRecord.request_id == request_id)
+        .order_by(AuditEventRecord.created_at.asc())
+    ))
+
+
+def get_job_result(db: Session, request_id: UUID):
+    job = db.scalar(
+        select(DeploymentJobRecord).where(DeploymentJobRecord.request_id == request_id)
+    )
+    if job is None:
+        return None
+    return {
+        "job_status": job.status,
+        "attempt_count": job.attempt_count,
+        "result": job.result_payload,
+    }
