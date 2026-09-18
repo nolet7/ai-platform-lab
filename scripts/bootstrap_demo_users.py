@@ -50,6 +50,7 @@ users = {user["username"]: user for user in call(f"/admin/realms/{REALM}/users?m
 credentials = []
 for name, role_names in (
     ("demo-requester", ("data-scientist", "viewer")),
+    ("demo-ml-engineer", ("ml-engineer", "viewer")),
     ("demo-approver", ("approver", "viewer")),
 ):
     user = users.get(name)
@@ -73,7 +74,7 @@ for name, role_names in (
         credentials.append(f"{name}: {new_password}")
     user.update({
         "firstName": "Demo",
-        "lastName": "Requester" if name == "demo-requester" else "Approver",
+        "lastName": name.removeprefix("demo-").replace("-", " ").title(),
         "email": name + "@ai-platform.local",
         "emailVerified": True,
         "requiredActions": [],

@@ -49,7 +49,7 @@ The local CA is trusted in Windows. These URLs are not public.
 | Prometheus | <https://prometheus.ai-platform.local/> | Local lab UI |
 | Tax classifier | <https://tax-classifier.ai-platform.local/> | KServe inference API, not a login page |
 
-The demo accounts are `demo-requester` and `demo-approver`. Their passwords
+The demo accounts are `demo-requester` (data scientist), `demo-ml-engineer` (ML engineer), and `demo-approver`. Their passwords
 are stored outside Git at
 `C:\Users\user\Downloads\ai-platform-demo-credentials.txt`. Argo CD,
 Grafana, and Keycloak administrator credentials are stored in their respective
@@ -77,7 +77,7 @@ flowchart LR
   S --> A
 ```
 
-1. Sign in as `demo-requester` and create a request for
+1. Sign in as `demo-requester` or `demo-ml-engineer` and create a request for
    `tax-document-classifier`, immutable version `1`, in `dev` or
    `staging`.
 2. Submit it. Sign out, then sign in as `demo-approver` and approve with a
