@@ -38,6 +38,21 @@ That initial attempt produced repeated dispatch failure audit records.
 The records were retained as evidence; the queued job resumed after the
 fix and succeeded.
 
+## Crossplane staging demonstration
+
+Request `bac9633d-8021-42cb-93cb-ea8d5847aeb3` was approved by a
+separate user after self-approval returned 403. Worker image `0.3.6`
+committed the staging release. The new `ModelWorkspace` selected
+`model-workspace-local`; its PVC became Bound and initializer Job
+completed. An initial KServe generated hostname exceeded 63 characters;
+PR #16 shortened only the serving resource to `-stg` while retaining the
+Ready workspace and PVC. The corrected InferenceService is Ready and its
+Argo Application is Synced/Healthy. Worker image `0.3.7` then read the
+XR through the restricted Argo API, verified the request ID, and
+persisted Crossplane `ready=true`, storage `Bound`, and audit event
+`deployment.infrastructure.ready`. Platform API image `0.4.3` serves
+that status to the portal. PRs #12 through #18 passed CI before merge.
+
 ## Requirements and evidence
 
 | Requirement | Status | Git path or resource | Evidence / remaining gap |
@@ -52,8 +67,8 @@ fix and succeeded.
 | Observability and ownership | Partially verified | `observability/`, `platform-monitoring` | Grafana datasources and 25/25 Prometheus targets verified earlier; demo trace-to-audit correlation not yet tested |
 | CI | Verified | `.github/workflows/gitops-validate.yaml` | PR #10 worker, API/portal, GitOps checks passed |
 | Argo real API integration | Verified | `services/deployment-worker/app/argo_api.py` | Restricted account read deployment app 200, control-plane app 403; live TLS and revision/history checks passed |
-| Crossplane local Composition | Verified separately | `gitops/platform-infrastructure/crossplane/` | Sample XR Ready, PVC Bound, initializer Job Complete; not yet tied to request workflow |
-| Connected portal | Partially verified | `services/platform-api/app/portal/` | Served over trusted URL; authenticated backend tested; interactive browser sign-in not yet verified |
+| Crossplane request workflow | Verified for staging demo | `services/deployment-worker/app/model_release_writer.py`, `app/argo_api.py`, `gitops/platform-infrastructure/crossplane/` | Request-linked XR Synced/Ready, PVC Bound, Job Complete; restricted Argo resource read 200, status and infrastructure audit persisted |
+| Connected portal | Partially verified | `services/platform-api/app/portal/` | Served over trusted URL; Argo and Crossplane fields backed by API; interactive browser sign-in/sign-out not yet verified |
 | Approval and audit | Verified for demo | `services/platform-api/app/repository.py` | Separate requester/approver, denial, decision, worker and Argo audit events |
 | CAIPE supervisor and A2A | Open | - | Explicit supervisor/task protocol and routing not yet implemented |
 | MCP tool surface | Open | - | Narrow Argo REST client exists; MCP wire interface not yet implemented |

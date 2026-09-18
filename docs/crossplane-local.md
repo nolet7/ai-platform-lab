@@ -41,3 +41,25 @@ kubectl get configmap tax-classifier-demo-info -n ai-platform-dev -o yaml
 Live validation on 2026-09-17 showed all three Argo Applications Synced/Healthy, the Function Installed/Healthy, the XRD Established, the XR Synced/Ready, the PVC Bound at 1 GiB, and the Job Complete. Status fields were `pvcName=tax-classifier-demo-data`, `storagePhase=Bound`, and `initJobName=tax-classifier-demo-init`.
 
 Do not delete the XR or prune its Application to reset the demo without first deciding whether the local PVC data may be discarded.
+
+## Approved deployment workflow (2026-09-18)
+
+The deployment worker renders a `ModelWorkspace` beside each approved
+tax-classifier KServe release. The XR carries the request ID and tenant
+labels. Argo owns the XR; Crossplane owns its PVC, metadata ConfigMap,
+and initializer Job. The dispatcher reads the live XR through the
+restricted Argo application resource API, verifies its namespace, name,
+and request ID, and records `deployment.infrastructure.ready` in the
+control API audit trail. The portal displays the observed Crossplane
+readiness and PVC name. A release requires both Argo Synced/Healthy and
+Crossplane Synced/Ready before the execution status becomes deployed.
+
+Staging request `bac9633d-8021-42cb-93cb-ea8d5847aeb3` demonstrated
+the full path: `ml-platform/tax-document-classifier-tax-ml-team-staging`
+was Synced/Ready, its PVC was Bound, and its initializer Job completed.
+The serving InferenceService uses the shorter `-stg` suffix so KServe's
+generated predictor hostname stays within the 63-character DNS label
+limit. The workspace and PVC retain the original `-staging` name.
+The staged Application is Synced/Healthy, the predictor is Ready, and
+the control API reports Crossplane `ready=true`, storage `Bound`, and
+the infrastructure audit event.
