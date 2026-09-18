@@ -1,0 +1,39 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: platform-portal
+  namespace: ai-platform
+  annotations:
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - api.ai-platform.local
+      secretName: ai-platform-api-tls
+  rules:
+    - host: api.ai-platform.local
+      http:
+        paths:
+          - path: /portal
+            pathType: Prefix
+            backend:
+              service:
+                name: platform-api
+                port:
+                  number: 8000
+          - path: /deployments
+            pathType: Prefix
+            backend:
+              service:
+                name: platform-api
+                port:
+                  number: 8000
+          - path: /me
+            pathType: Exact
+            backend:
+              service:
+                name: platform-api
+                port:
+                  number: 8000
