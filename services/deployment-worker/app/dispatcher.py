@@ -1,9 +1,7 @@
 import logging
 import time
 
-from .config import (
-    DISPATCH_INTERVAL_SECONDS, ARGO_API_URL, ARGO_API_TOKEN, ARGO_CA_BUNDLE,
-)
+from .config import DISPATCH_INTERVAL_SECONDS
 from .queue import (
     queue,
     redis_connection,
@@ -17,7 +15,7 @@ from .repository import (
     record_workspace_observation,
 )
 from .dispatch_ids import make_rq_job_id
-from .argo_api import ArgoAPIError, inspect_application, inspect_workspace
+from .supervisor import AgentObservationError, observe_argo, observe_crossplane
 from .tasks import (
     process_deployment_job,
 )
@@ -82,24 +80,19 @@ def dispatch_once():
         if not redis_connection.set(key, "1", nx=True, ex=30):
             continue
         try:
-            observation = inspect_application(
-                pending["application"],
-                base_url=ARGO_API_URL,
-                token=ARGO_API_TOKEN,
-                expected_revision=pending["commit_sha"],
-                ca_bundle=ARGO_CA_BUNDLE,
+            observation = observe_argo(
+                pending["application"], pending["commit_sha"],
+                pending["request_id"],
             )
             record_argo_observation(pending["job_id"], observation)
             if pending.get("workspace"):
-                workspace = inspect_workspace(
+                workspace = observe_crossplane(
                     pending["application"], pending["workspace"],
                     pending["namespace"], pending["request_id"],
-                    base_url=ARGO_API_URL, token=ARGO_API_TOKEN,
-                    ca_bundle=ARGO_CA_BUNDLE,
                 )
                 record_workspace_observation(pending["job_id"], workspace)
-        except ArgoAPIError:
-            logger.info("Argo application %s is not readable yet", pending["application"])
+        except AgentObservationError:
+            logger.info("Agent observation for %s is not ready yet", pending["application"])
 
 
 def main():

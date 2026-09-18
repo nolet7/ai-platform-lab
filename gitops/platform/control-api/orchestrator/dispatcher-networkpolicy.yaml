@@ -47,14 +47,13 @@ spec:
         - protocol: TCP
           port: 53
 
-
+    # Send request-scoped observations to internal A2A agents.
     - to:
-        - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: argocd
-          podSelector:
-            matchLabels:
-              app.kubernetes.io/name: argocd-server
+        - podSelector:
+            matchExpressions:
+              - key: app
+                operator: In
+                values: [caipe-argo-agent, caipe-crossplane-agent]
       ports:
         - protocol: TCP
-          port: 8080
+          port: 8000

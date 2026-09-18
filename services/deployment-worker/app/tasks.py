@@ -1,7 +1,7 @@
 from uuid import UUID
 
-from .config import MLFLOW_TRACKING_URI, ARGO_API_URL, ARGO_API_TOKEN, ARGO_CA_BUNDLE
-from .argo_api import inspect_application, ArgoAPIError
+from .config import MLFLOW_TRACKING_URI
+from .supervisor import observe_argo, AgentObservationError
 from .model_registry import resolve_model_version
 
 from .gitops_writer import (
@@ -122,14 +122,11 @@ def process_deployment_job(
         # Argo may not have discovered the new Git commit yet. Record the
         # observed state; a later status poll can confirm reconciliation.
         try:
-            argo_result = inspect_application(
-                gitops_result["application"],
-                base_url=ARGO_API_URL,
-                token=ARGO_API_TOKEN,
-                expected_revision=gitops_result["commit_sha"],
-                ca_bundle=ARGO_CA_BUNDLE,
+            argo_result = observe_argo(
+                gitops_result["application"], gitops_result["commit_sha"],
+                payload["request_id"],
             )
-        except ArgoAPIError:
+        except AgentObservationError:
             argo_result = {
                 "application": gitops_result["application"],
                 "sync_status": "Pending",
