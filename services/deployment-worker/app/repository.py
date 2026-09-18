@@ -209,11 +209,18 @@ def mark_dispatch_error(
             job.request_id,
         )
 
-        job.status = "queued"
+        job.attempt_count += 1
+        job.status = "failed"
         job.last_error = error[:2000]
         job.updated_at = now
 
         if deployment:
+            deployment.execution_status = "failed"
+            deployment.execution_message = (
+                "Dispatch failed; retry scheduled"
+                if job.attempt_count < job.max_attempts
+                else "Maximum dispatch attempts exceeded"
+            )
             _audit(
                 session=session,
                 deployment=deployment,
