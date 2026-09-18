@@ -4,3 +4,4 @@ namespace: ml-platform
 resources:
   - inferenceservice.yaml
   - networkpolicy.yaml
+  - workspace.yaml

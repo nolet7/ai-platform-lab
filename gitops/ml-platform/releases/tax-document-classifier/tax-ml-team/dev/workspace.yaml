@@ -1,0 +1,16 @@
+apiVersion: platform.ai/v1alpha1
+kind: ModelWorkspace
+metadata:
+  name: tax-document-classifier-tax-ml-team-dev
+  labels:
+    ai-platform.io/tenant: tax-ml-team
+    ai-platform.io/environment: dev
+  annotations:
+    ai-platform.io/request-id: "48cf0c07-99ee-42db-9cbd-8a2ed975864f"
+spec:
+  modelName: tax-document-classifier
+  environment: dev
+  storage: 1Gi
+  crossplane:
+    compositionRef:
+      name: model-workspace-local
