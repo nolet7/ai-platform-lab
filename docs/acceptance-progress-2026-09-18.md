@@ -53,6 +53,23 @@ persisted Crossplane `ready=true`, storage `Bound`, and audit event
 `deployment.infrastructure.ready`. Platform API image `0.4.3` serves
 that status to the portal. PRs #12 through #18 passed CI before merge.
 
+## CAIPE A2A/MCP staging demonstration
+
+PRs #20 and #21 passed CAIPE, worker, API/portal and GitOps CI. The live
+agents use A2A v1 JSON-RPC and MCP Streamable HTTP tools backed by the real
+restricted Argo CD API. Worker and dispatcher images `0.3.8` use the CAIPE
+supervisor; API image `0.4.4` renders the result. The worker and dispatcher
+no longer hold the Argo API token or CA bundle.
+
+Request `5e6ed6ca-8af0-4cd1-9398-ac1ab49daf8a` passed separate-identity
+approval after requester self-approval returned 403. The worker committed
+`8e3200a6060d6aa74255e1b014be6dd12090d008`; the first A2A Argo result
+found that revision in history while sync was settling. The dispatcher later
+reported `healthy` and "Argo CD and Crossplane are ready". The serving
+Application is Synced/Healthy and both agent logs recorded completed tasks
+with that request ID as correlation ID. See `docs/caipe-architecture.md` for
+the protocol, authorization and recovery path.
+
 ## Requirements and evidence
 
 | Requirement | Status | Git path or resource | Evidence / remaining gap |
@@ -66,14 +83,14 @@ that status to the portal. PRs #12 through #18 passed CI before merge.
 | KServe serving and inference | Verified | `gitops/ml-platform/releases/` | Tenant InferenceService Ready; three sample predictions passed |
 | Observability and ownership | Partially verified | `observability/`, `platform-monitoring` | Grafana datasources and 25/25 Prometheus targets verified earlier; demo trace-to-audit correlation not yet tested |
 | CI | Verified | `.github/workflows/gitops-validate.yaml` | PR #10 worker, API/portal, GitOps checks passed |
-| Argo real API integration | Verified | `services/deployment-worker/app/argo_api.py` | Restricted account read deployment app 200, control-plane app 403; live TLS and revision/history checks passed |
-| Crossplane request workflow | Verified for staging demo | `services/deployment-worker/app/model_release_writer.py`, `app/argo_api.py`, `gitops/platform-infrastructure/crossplane/` | Request-linked XR Synced/Ready, PVC Bound, Job Complete; restricted Argo resource read 200, status and infrastructure audit persisted |
+| Argo real API integration | Verified | `services/caipe-agent/app/argo_rest.py` | Agent's restricted account read deployment app; control-plane app denied; live TLS and revision/history checks passed |
+| Crossplane request workflow | Verified for staging demo | `services/deployment-worker/app/model_release_writer.py`, `services/caipe-agent/app/argo_rest.py`, `gitops/platform-infrastructure/crossplane/` | Request-linked XR Synced/Ready, PVC Bound, Job Complete; agent status and infrastructure audit persisted |
 | Connected portal | Partially verified | `services/platform-api/app/portal/` | Served over trusted URL; Argo and Crossplane fields backed by API; interactive browser sign-in/sign-out not yet verified |
 | Approval and audit | Verified for demo | `services/platform-api/app/repository.py` | Separate requester/approver, denial, decision, worker and Argo audit events |
-| CAIPE supervisor and A2A | Open | - | Explicit supervisor/task protocol and routing not yet implemented |
-| MCP tool surface | Open | - | Narrow Argo REST client exists; MCP wire interface not yet implemented |
-| Crossplane in request workflow | Open | - | Sample XR reconciles independently |
-| Rollback | Open | - | No authorized rollback workflow or tested rollback yet |
+| CAIPE supervisor and A2A | Verified for staging demo | `services/deployment-worker/app/supervisor.py`, `services/caipe-agent/` | Both purpose-specific agents completed request-correlated A2A tasks; dispatcher produced healthy result |
+| MCP tool surface | Verified for staging demo | `services/caipe-agent/app/main.py` | Authenticated, scoped Argo and Crossplane MCP tools exercised through A2A; anonymous A2A returned 401 |
+| Crossplane in request workflow | Verified for staging demo | `services/deployment-worker/app/model_release_writer.py` | Request-linked XR and storage reconciled, status propagated through the agent |
+| Rollback | Partial | `docs/caipe-architecture.md` | Approved immutable-version redeployment is described; no alternate version or automated rollback exercised |
 | Security hardening | Partial | NetworkPolicies and scoped Argo token | Broader RBAC, pod, secret, rate-limit, tenant and failure audit pending |
 | Repository hygiene | Partial | `.gitignore`, CI secret scan | Final sweep and stale docs cleanup pending |
 
