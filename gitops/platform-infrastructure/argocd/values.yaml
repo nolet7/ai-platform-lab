@@ -7,6 +7,8 @@ configs:
     url: https://argocd.ai-platform.local
     accounts.caipe-observer: apiKey
     accounts.caipe-observer.enabled: "true"
+    accounts.admine: login
+    accounts.admine.enabled: "true"
   rbac:
     policy.csv: |
       p, role:caipe-observer, applications, get, ai-platform-dev/*, allow
@@ -14,6 +16,7 @@ configs:
       p, role:caipe-observer, applications, get, ai-platform-prod/*, allow
       p, role:caipe-observer, applications, get, ai-platform-ml/*, allow
       g, caipe-observer, role:caipe-observer
+      g, admine, role:admin
 
 applicationSet:
   replicas: 1

@@ -94,6 +94,9 @@ Read the [portal guide](docs/self-service-portal.md),
 [Argo observer](docs/argo-api-integration.md), and
 [Crossplane guide](docs/crossplane-local.md) for component details.
 
+The [local administrator guide](docs/local-admin-access.md) documents the
+separate sign-in stores and credential recovery boundaries.
+
 ## Repository map
 
 | Path | Purpose |
