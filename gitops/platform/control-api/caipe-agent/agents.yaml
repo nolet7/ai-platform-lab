@@ -1,0 +1,231 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: caipe-agent
+automountServiceAccountToken: false
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: caipe-argo-agent
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: caipe-argo-agent
+  template:
+    metadata:
+      labels:
+        app: caipe-argo-agent
+    spec:
+      serviceAccountName: caipe-agent
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: agent
+          image: ai-platform-caipe-agent:0.1.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8000
+          env:
+            - name: CAIPE_AGENT_KIND
+              value: argo
+            - name: CAIPE_INTERNAL_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: caipe-agent-auth
+                  key: CAIPE_INTERNAL_TOKEN
+            - name: ARGO_API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: argocd-api-observer
+                  key: ARGO_API_TOKEN
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            capabilities:
+              drop: [ALL]
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          volumeMounts:
+            - name: argo-ca
+              mountPath: /etc/ai-platform-ca
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: argo-ca
+          configMap:
+            name: argocd-api-trust
+        - name: tmp
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: caipe-argo-agent
+spec:
+  selector:
+    app: caipe-argo-agent
+  ports:
+    - name: http
+      port: 8000
+      targetPort: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: caipe-crossplane-agent
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: caipe-crossplane-agent
+  template:
+    metadata:
+      labels:
+        app: caipe-crossplane-agent
+    spec:
+      serviceAccountName: caipe-agent
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: agent
+          image: ai-platform-caipe-agent:0.1.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8000
+          env:
+            - name: CAIPE_AGENT_KIND
+              value: crossplane
+            - name: CAIPE_INTERNAL_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: caipe-agent-auth
+                  key: CAIPE_INTERNAL_TOKEN
+            - name: ARGO_API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: argocd-api-observer
+                  key: ARGO_API_TOKEN
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            capabilities:
+              drop: [ALL]
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          volumeMounts:
+            - name: argo-ca
+              mountPath: /etc/ai-platform-ca
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: argo-ca
+          configMap:
+            name: argocd-api-trust
+        - name: tmp
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: caipe-crossplane-agent
+spec:
+  selector:
+    app: caipe-crossplane-agent
+  ports:
+    - name: http
+      port: 8000
+      targetPort: http
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: caipe-agents
+spec:
+  podSelector:
+    matchExpressions:
+      - key: app
+        operator: In
+        values: [caipe-argo-agent, caipe-crossplane-agent]
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: deployment-worker
+        - podSelector:
+            matchLabels:
+              app: deployment-dispatcher
+      ports:
+        - protocol: TCP
+          port: 8000
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: argocd
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: argocd-server
+      ports:
+        - protocol: TCP
+          port: 8080
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
