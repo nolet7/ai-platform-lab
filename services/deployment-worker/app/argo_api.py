@@ -58,3 +58,68 @@ def inspect_application(
         "health_status": health.get("status", "Unknown"),
         "application_url": f"https://argocd.ai-platform.local/applications/{application}",
     }
+
+
+def inspect_workspace(
+    application: str,
+    workspace: str,
+    namespace: str,
+    request_id: str,
+    *,
+    base_url: str,
+    token: str,
+    ca_bundle: str,
+) -> dict:
+    """Read one GitOps-owned Crossplane XR through the restricted Argo API."""
+    import json
+    from uuid import UUID
+
+    if not APPLICATION_NAME.fullmatch(application) or not APPLICATION_NAME.fullmatch(workspace):
+        raise ValueError("Invalid application or workspace name")
+    if namespace != "ml-platform":
+        raise ValueError("Unsupported workspace namespace")
+    UUID(request_id)
+    if not token or base_url != "https://argocd-server.argocd.svc.cluster.local:443":
+        raise ArgoAPIError("Scoped Argo API access is not configured")
+    try:
+        with httpx.Client(timeout=10.0, verify=ca_bundle) as client:
+            response = client.get(
+                f"{base_url.rstrip('/')}/api/v1/applications/{application}/resource",
+                params={
+                    "namespace": namespace,
+                    "resourceName": workspace,
+                    "version": "v1alpha1",
+                    "group": "platform.ai",
+                    "kind": "ModelWorkspace",
+                },
+                headers={"Authorization": f"Bearer {token}"},
+            )
+            response.raise_for_status()
+            manifest = json.loads(response.json()["manifest"])
+    except (httpx.HTTPError, ValueError, KeyError, TypeError) as error:
+        raise ArgoAPIError("Crossplane workspace inspection failed") from error
+    metadata = manifest.get("metadata", {})
+    if (
+        manifest.get("kind") != "ModelWorkspace"
+        or metadata.get("name") != workspace
+        or metadata.get("namespace") != namespace
+        or metadata.get("annotations", {}).get("ai-platform.io/request-id") != request_id
+    ):
+        raise ArgoAPIError("Crossplane workspace identity does not match request")
+    status = manifest.get("status", {})
+    conditions = {
+        item.get("type"): item.get("status")
+        for item in status.get("conditions", [])
+        if isinstance(item, dict)
+    }
+    return {
+        "application": application,
+        "workspace": workspace,
+        "namespace": namespace,
+        "request_id": request_id,
+        "ready": conditions.get("Ready") == "True" and conditions.get("Synced") == "True",
+        "synced": conditions.get("Synced") == "True",
+        "pvc_name": status.get("pvcName"),
+        "storage_phase": status.get("storagePhase"),
+        "init_job_name": status.get("initJobName"),
+    }
