@@ -13,7 +13,7 @@ metadata:
   annotations:
     serving.kserve.io/deploymentMode: Standard
     serving.kserve.io/secretName: tax-classifier-s3
-    ai-platform.io/request-id: "bac9633d-8021-42cb-93cb-ea8d5847aeb3"
+    ai-platform.io/request-id: "5e6ed6ca-8af0-4cd1-9398-ac1ab49daf8a"
     ai-platform.io/run-id: "c7f6f3a7fb36426385ca9e0ec6949eb3"
     ai-platform.io/source-git-sha: "3a656eb486ea94c6e95ae7333d4358bf231299f0"
 spec:

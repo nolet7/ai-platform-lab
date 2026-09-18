@@ -6,7 +6,7 @@ metadata:
     ai-platform.io/tenant: tax-ml-team
     ai-platform.io/environment: staging
   annotations:
-    ai-platform.io/request-id: "bac9633d-8021-42cb-93cb-ea8d5847aeb3"
+    ai-platform.io/request-id: "5e6ed6ca-8af0-4cd1-9398-ac1ab49daf8a"
 spec:
   modelName: tax-document-classifier
   environment: staging
