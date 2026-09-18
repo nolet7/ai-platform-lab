@@ -24,16 +24,17 @@ flowchart LR
   Worker --> Git[GitOps commit]
   Git --> Argo[Argo CD]
   Argo --> KServe[KServe release]
-  Argo --> Crossplane[Crossplane demo resources]
+  Argo --> Crossplane[Request-linked Crossplane workspace]
   Worker --> ArgoAPI[Scoped Argo REST API]
   ArgoAPI --> DB
   DB --> Portal
 ```
 
 The Argo observer uses a read-only local account and trusted internal
-TLS. The Crossplane sample reconciles a local PVC and initializer Job;
-it is not yet invoked by the deployment request workflow. A CAIPE
-supervisor, A2A wire protocol, MCP tools, and rollback flow remain open.
+TLS. Approved KServe releases include a request-linked Crossplane
+workspace. Its local Composition provisions a PVC and initializer Job.
+The dispatcher observes its Ready status through the scoped Argo API.
+A CAIPE supervisor, A2A wire protocol, MCP tools, and rollback flow remain open.
 
 ## Local URLs
 
