@@ -25,7 +25,7 @@ REFERENCE = {
 class ModelReleaseWriterTests(unittest.TestCase):
     def setUp(self):
         self.payload = {
-            "tenant_id": "team-ml",
+            "tenant_id": "tax-ml-team",
             "model_name": "tax-document-classifier",
             "model_version": "1",
             "environment": "staging",
@@ -44,6 +44,9 @@ class ModelReleaseWriterTests(unittest.TestCase):
         self.assertIn(self.payload["request_id"], workspace)
         manifest = next(v for k, v in files.items() if k.endswith("/inferenceservice.yaml"))
         self.assertIn("kind: InferenceService", manifest)
+        self.assertIn("name: tax-document-classifier-tax-ml-team-stg", manifest)
+        self.assertEqual(metadata["workload"], "tax-document-classifier-tax-ml-team-stg")
+        self.assertEqual(metadata["workspace"], "tax-document-classifier-tax-ml-team-staging")
         self.assertIn(REFERENCE["storage_uri"], manifest)
         self.assertIn(REFERENCE["source_git_sha"], manifest)
         self.assertNotIn("@candidate", manifest)

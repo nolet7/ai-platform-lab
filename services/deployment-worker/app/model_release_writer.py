@@ -64,6 +64,12 @@ def render_model_release_files(payload):
     release = f"{name}-{tenant}-{environment}"
     if len(release) > 63 or not DNS_LABEL.fullmatch(release):
         raise ModelReleaseError("Release name is too long")
+    serving_name = release
+    if len(serving_name + "-predictor-ml-platform") > 63:
+        suffix = {"staging": "stg"}.get(environment, environment)
+        serving_name = f"{name}-{tenant}-{suffix}"
+    if len(serving_name + "-predictor-ml-platform") > 63:
+        raise ModelReleaseError("Release name exceeds KServe hostname limit")
     root = f"gitops/ml-platform/releases/{name}/{tenant}/{environment}"
     namespace = "ml-platform"
 
@@ -71,7 +77,7 @@ def render_model_release_files(payload):
 apiVersion: serving.kserve.io/v1beta1
 kind: InferenceService
 metadata:
-  name: {release}
+  name: {serving_name}
   labels:
     app.kubernetes.io/name: {name}
     app.kubernetes.io/component: serving
@@ -107,11 +113,11 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: {release}
+  name: {serving_name}
 spec:
   podSelector:
     matchLabels:
-      serving.kserve.io/inferenceservice: {release}
+      serving.kserve.io/inferenceservice: {serving_name}
   policyTypes:
     - Ingress
     - Egress
@@ -223,7 +229,7 @@ spec:
     metadata = {
         "application": app_name,
         "namespace": namespace,
-        "workload": release,
+        "workload": serving_name,
         "workspace": release,
         "environment": environment,
         "workload_path": root,

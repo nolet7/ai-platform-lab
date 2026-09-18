@@ -1,7 +1,7 @@
 apiVersion: serving.kserve.io/v1beta1
 kind: InferenceService
 metadata:
-  name: tax-document-classifier-tax-ml-team-staging
+  name: tax-document-classifier-tax-ml-team-stg
   labels:
     app.kubernetes.io/name: tax-document-classifier
     app.kubernetes.io/component: serving
