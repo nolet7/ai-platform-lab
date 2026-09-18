@@ -30,7 +30,7 @@ spec:
 
       containers:
         - name: worker
-          image: ai-platform-deployment-worker:0.3.7
+          image: ai-platform-deployment-worker:0.3.8
           imagePullPolicy: IfNotPresent
 
           command:
@@ -52,8 +52,7 @@ spec:
                 name: gitops-github-writer
 
             - secretRef:
-                name: argocd-api-observer
-                optional: true
+                name: caipe-agent-auth
 
           securityContext:
             allowPrivilegeEscalation: false
@@ -77,14 +76,7 @@ spec:
             - name: tmp
               mountPath: /tmp
 
-            - name: argocd-api-trust
-              mountPath: /etc/ai-platform-ca
-              readOnly: true
 
       volumes:
         - name: tmp
           emptyDir: {}
-
-        - name: argocd-api-trust
-          configMap:
-            name: argocd-api-trust
