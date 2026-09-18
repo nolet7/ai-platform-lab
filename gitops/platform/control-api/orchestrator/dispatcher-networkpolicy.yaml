@@ -46,3 +46,15 @@ spec:
 
         - protocol: TCP
           port: 53
+
+
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: argocd
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: argocd-server
+      ports:
+        - protocol: TCP
+          port: 8080
