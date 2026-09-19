@@ -15,7 +15,10 @@ def catalog_path():
 
 
 def load_model_catalog():
-    models = json.loads(catalog_path().read_text()).get("models")
+    document = json.loads(catalog_path().read_text())
+    if document.get("schema_version") != "1.0":
+        raise RuntimeError("Unsupported model catalog schema")
+    models = document.get("models")
     if not isinstance(models, list) or not models:
         raise RuntimeError("Model catalog must contain models")
     catalog = {item["name"]: item for item in models}

@@ -13,6 +13,7 @@ def main():
     parser.add_argument("name")
     parser.add_argument("--display-name", required=True)
     parser.add_argument("--description", required=True)
+    parser.add_argument("--owner", required=True)
     parser.add_argument("--output", type=Path, default=Path("services"))
     args = parser.parse_args()
     if not NAME.fullmatch(args.name):
@@ -26,6 +27,7 @@ def main():
         "__MODEL_NAME__": args.name,
         "__DISPLAY_NAME__": args.display_name,
         "__DESCRIPTION__": args.description,
+        "__OWNER__": args.owner,
     }
     for path in target.rglob("*"):
         if path.is_file():

@@ -7,7 +7,7 @@ template.
 2. Add unit, data contract, and model quality tests.
 3. Train with immutable DATASET_VERSION and SOURCE_GIT_SHA values.
 4. Register a Ready numeric version in the platform MLflow registry.
-5. Add model-template.json to platform/model-catalog.json in a reviewed PR.
+5. Add model-template.json (including owner and minimum macro F1) to platform/model-catalog.json in a reviewed PR.
 6. After the catalog rollout, select the model and numeric version in the
    portal, submit, and obtain approval from a different identity.
 
