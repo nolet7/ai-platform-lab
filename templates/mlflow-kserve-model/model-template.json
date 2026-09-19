@@ -1,0 +1,10 @@
+{
+  "name": "__MODEL_NAME__",
+  "display_name": "__DISPLAY_NAME__",
+  "description": "__DESCRIPTION__",
+  "model_format": "mlflow",
+  "runtime": "kserve-mlserver",
+  "service_account": "tax-classifier-serving",
+  "storage_secret": "tax-classifier-s3",
+  "environments": ["dev", "staging"]
+}

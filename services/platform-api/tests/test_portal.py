@@ -111,3 +111,17 @@ def test_portal_only_offers_supported_environments():
     assert 'value="dev"' in html
     assert 'value="staging"' in html
     assert 'value="prod"' not in html
+
+
+def test_catalog_endpoint_is_authenticated_and_lists_models():
+    principal = Principal(
+        subject="u", username="alice", tenant_id="tax-ml-team",
+        roles=["data-scientist"],
+    )
+    app.dependency_overrides[get_current_principal] = lambda: principal
+    try:
+        response = TestClient(app).get("/catalog/models")
+        assert response.status_code == 200
+        assert response.json()[0]["name"] == "tax-document-classifier"
+    finally:
+        app.dependency_overrides.clear()

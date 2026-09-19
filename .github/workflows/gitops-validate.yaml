@@ -12,6 +12,10 @@ on:
       - "services/caipe-agent/**"
       - "scripts/configure_portal_oidc.py"
       - "scripts/check_gitops_secrets.py"
+      - "platform/model-catalog.json"
+      - "templates/**"
+      - "scripts/scaffold_model.py"
+      - "scripts/validate_model_catalog.py"
       - ".github/workflows/gitops-validate.yaml"
 
   push:
@@ -25,6 +29,10 @@ on:
       - "services/caipe-agent/**"
       - "scripts/configure_portal_oidc.py"
       - "scripts/check_gitops_secrets.py"
+      - "platform/model-catalog.json"
+      - "templates/**"
+      - "scripts/scaffold_model.py"
+      - "scripts/validate_model_catalog.py"
       - ".github/workflows/gitops-validate.yaml"
 
 permissions:
@@ -93,6 +101,12 @@ jobs:
 
           echo "Validated ${count} Kustomization directories."
 
+      - name: Validate model catalog
+        run: |
+          python3 scripts/validate_model_catalog.py
+          cmp platform/model-catalog.json services/platform-api/model-catalog.json
+          cmp platform/model-catalog.json services/deployment-worker/model-catalog.json
+
       - name: Validate YAML and reject inline Secret payloads
         shell: bash
         run: |
@@ -100,6 +114,10 @@ jobs:
           python3 -m venv /tmp/gitops-validation
           /tmp/gitops-validation/bin/pip install --disable-pip-version-check PyYAML==6.0.3
           /tmp/gitops-validation/bin/python scripts/check_gitops_secrets.py
+      - "platform/model-catalog.json"
+      - "templates/**"
+      - "scripts/scaffold_model.py"
+      - "scripts/validate_model_catalog.py"
       - name: Reject committed PEM private keys
         shell: bash
         run: |

@@ -18,6 +18,7 @@ from .database import (
     database_is_ready,
     get_db,
 )
+from .model_catalog import load_model_catalog
 from .models import (
     ApprovalDecision,
     AuditEventView,
@@ -50,7 +51,7 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="AI Platform Control API",
-    version="0.4.0",
+    version="0.4.6",
     description=(
         "Enterprise control API for AI/ML deployments"
     ),
@@ -128,6 +129,14 @@ def translate_workflow_error(
         )
 
     raise error
+
+
+@app.get("/catalog/models")
+def model_catalog(
+    principal: Principal = Depends(get_current_principal),
+):
+    del principal
+    return list(load_model_catalog().values())
 
 
 @app.get("/health/live")
