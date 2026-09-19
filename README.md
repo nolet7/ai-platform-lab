@@ -31,6 +31,44 @@ The [acceptance checkpoint](docs/acceptance-progress-2026-09-18.md) records
 evidence and remaining gaps. Distributed CAIPE tracing, automated rollback,
 and some security and failure-path audits remain open.
 
+## Use cases
+
+| User or team | Use case | Platform outcome |
+|---|---|---|
+| Data scientist | Package training code from the golden template, register a qualified MLflow version, and request a development or staging deployment | Reproducible model lineage and a governed deployment request |
+| ML engineer | Onboard a model application, validate the inference contract, and deploy an immutable registered version | KServe serving resources generated without hand-written workload YAML |
+| Approver | Review the model, tenant, version, environment, and reason before release | Separation of duties with an auditable approval decision |
+| Platform engineer | Review catalog entries, shared runtimes, identities, policies, and environment configuration | Standardized deployments with centralized guardrails |
+| SRE or operator | Inspect reconciliation, readiness, metrics, logs, and correlated request events | A single operational view across API, Argo CD, Crossplane, and KServe |
+| Auditor | Trace requester, approver, immutable lineage, Git revision, and runtime state | Evidence from request creation through serving readiness |
+
+Typical applications include document classification, fraud scoring, risk
+models, forecasting, recommendation, and other MLflow-compatible models that
+serve the KServe V2 inference protocol. The current lab enables development
+and staging. Production remains gated until promotion and rollback controls
+are fully verified.
+
+## Platform functions
+
+| Function | What it does |
+|---|---|
+| Golden project scaffolding | Creates a model repository skeleton with a training contract, pinned starter dependencies, lineage test, and catalog entry template |
+| Declarative model catalog | Defines the model name, display metadata, MLflow format, KServe runtime, storage identity, service account, and enabled environments |
+| Identity and role enforcement | Authenticates with Keycloak and authorizes data scientists, ML engineers, approvers, viewers, and platform administrators |
+| Tenant isolation | Limits normal users to their tenant and carries the tenant identity into request and runtime metadata |
+| Deployment request workflow | Creates, submits, approves, rejects, lists, and audits immutable model deployment requests |
+| Separation of duties | Prevents a requester from approving their own deployment |
+| Registry and lineage validation | Resolves a numeric MLflow version and validates Ready status, immutable model ID, run ID, source commit, dataset version, artifact URI, and model metric |
+| GitOps generation | Produces tenant-scoped KServe, NetworkPolicy, Crossplane workspace, Kustomize, and Argo CD resources |
+| Automated reconciliation | Uses Argo CD to apply and self-heal desired state from the main branch |
+| Infrastructure provisioning | Uses Crossplane to create and report the request-linked model workspace and storage state |
+| Serving | Deploys the registered model through KServe and the V2 inference protocol |
+| Agent-based observation | Uses scoped A2A and MCP agents to read Argo CD and Crossplane state without giving workers broad cluster credentials |
+| Status and audit | Returns policy, execution, Argo, Crossplane, and request event details to the portal and API |
+| Observability | Exposes Prometheus metrics, Grafana dashboards, Loki logs, and request correlation for operations |
+| Secure ingress and TLS | Publishes local HTTPS routes through nginx and certificates issued by the local cert-manager CA |
+| CI validation | Renders Kustomizations, tests services, validates the model catalog, rejects inline secret payloads, and checks repository hygiene |
+
 ## Local URLs and access
 
 Windows hosts entries map these names to `127.0.0.1`. Windows ports 80 and
