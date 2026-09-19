@@ -1,0 +1,15 @@
+stages:
+  evaluate:
+    cmd: python src/evaluate.py
+    deps:
+      - src/train.py
+      - src/evaluate.py
+      - data/training.csv
+    params:
+      - minimum_macro_f1
+      - dataset_version
+    outs:
+      - models/model.joblib
+    metrics:
+      - reports/metrics.json:
+          cache: false

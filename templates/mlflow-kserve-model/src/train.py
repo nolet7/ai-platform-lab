@@ -4,10 +4,11 @@ Implement the two project functions and retain the lineage contract.
 """
 import os
 import mlflow
+import mlflow.sklearn
 
-MODEL_NAME = os.environ["MODEL_NAME"]
-DATASET_VERSION = os.environ["DATASET_VERSION"]
-SOURCE_GIT_SHA = os.environ["SOURCE_GIT_SHA"]
+MODEL_NAME = os.getenv("MODEL_NAME", "__MODEL_NAME__")
+DATASET_VERSION = os.getenv("DATASET_VERSION", "")
+SOURCE_GIT_SHA = os.getenv("SOURCE_GIT_SHA", "")
 
 
 def load_training_data():
@@ -19,6 +20,8 @@ def build_and_evaluate(training_data):
 
 
 def main():
+    if not DATASET_VERSION or not SOURCE_GIT_SHA:
+        raise ValueError("Set immutable DATASET_VERSION and SOURCE_GIT_SHA before registration")
     data = load_training_data()
     model, macro_f1 = build_and_evaluate(data)
     if not 0 <= macro_f1 <= 1:

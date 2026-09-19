@@ -12,10 +12,18 @@ From the repository root:
       --description "Scores transactions for fraud review" \
       --owner tax-ml-team
 
-The command creates services/fraud-risk-model from the
+The command creates an independent sibling Git/DVC repository fraud-risk-model from the
 templates/mlflow-kserve-model directory. The generated project contains the
-training contract, starter dependencies, a lineage contract test, and a
-catalog entry template.
+training contract, DVC pipeline, starter dependencies, model CI, a lineage
+contract test, and a catalog entry template. Use --output to choose an external
+parent directory; targets inside the platform checkout are rejected.
+
+Install requirements-dev.txt, implement the project training functions,
+track your approved input using DVC, configure a project-scoped DVC remote,
+and run dvc repro. Commit code, DVC metadata and metrics in the model repo;
+push dataset/model artifacts with dvc push. Publish the model repository
+with gh repo create OWNER/REPO --private --source . --push after a first
+commit. Remote creation is explicit; the scaffold initializes local Git.
 
 ## 2. Implement and qualify the model
 
@@ -37,7 +45,8 @@ platform/model-catalog.json, then run:
     python3 scripts/sync_model_catalog.py
     python3 scripts/validate_model_catalog.py
 
-Submit the model code and catalog change through a pull request. CI validates
+Submit model code in the independent model repository. Submit only the catalog
+change through a separate platform pull request. Platform CI validates
 the catalog and service tests. A platform maintainer builds and rolls out the
 new API and worker images. The portal then obtains models from the
 authenticated /catalog/models endpoint.

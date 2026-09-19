@@ -113,7 +113,7 @@ GitOps resources. See docs/model-application-golden-path.md.
 ## Worked data scientist example
 
 The repository includes a complete fictional tax-transaction example in
-`services/mock-avalara-tax-category-classifier`. It generates privacy-safe
+`https://github.com/nolet7/mock-avalara-tax-model`. It generates privacy-safe
 synthetic data, trains and evaluates a scikit-learn pipeline, enforces the
 catalog quality threshold, and registers the model in MLflow. Follow the
 [Mock Avalara data scientist walkthrough](docs/mock-avalara-data-scientist-walkthrough.md)

@@ -1,167 +1,109 @@
-# Mock Avalara data scientist walkthrough
+# Mock Avalara: independent model development with DVC
 
-This walkthrough shows how a data scientist develops, uploads, and requests
-deployment of a fictional transaction tax-category model. All records are
-synthetic. The example does not represent real tax rules and must not be used
-for tax or compliance decisions.
+This fictional example lives in https://github.com/nolet7/mock-avalara-tax-model.
+Data scientists and ML engineers commit model work there. The platform owns
+shared templates, policy, catalog and deployment orchestration. It does not
+host each team's source tree. These synthetic labels are not actual tax rules.
 
-## 1. Enter the authoritative repository
+## 1. Clone and prepare
 
-Run commands in Ubuntu WSL:
+```bash
+git clone https://github.com/nolet7/mock-avalara-tax-model.git
+cd mock-avalara-tax-model
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements-dev.txt
+git switch -c model/improve-features
+```
 
-    cd /home/lateef/ai-platform-lab
-    git switch main
-    git pull --ff-only
-    git switch -c model/mock-avalara-tax-category
+## 2. Generate and qualify
 
-The example project is services/mock-avalara-tax-code.
+```bash
+dvc repro
+pytest -q
+dvc metrics show
+```
 
-## 2. Understand the synthetic dataset
+`params.yaml` controls 600 rows, the seed and the minimum macro F1.
+`dvc.yaml` generates data/raw/mock-tax-transactions-v1.csv, evaluates a
+TF-IDF + one-hot + scaled amount logistic regression, and caches the dataset
+and models/model.joblib. dvc.lock records hashes of inputs and outputs.
+reports/metrics.json is small and committed for review.
 
-Generate 600 deterministic fictional transactions:
+The data scientist uses the CSV for exploration, feature engineering,
+training and held-out evaluation. It contains transaction_id,
+item_description, product_category, amount, destination_state,
+exemption_certificate, customer_type and label. No customer identities are
+included. The three demonstration classes are TAXABLE_TANGIBLE,
+TAXABLE_SAAS and EXEMPT_PROFESSIONAL_SERVICE. Their deliberately simple
+patterns yield perfect scores; this demonstrates plumbing, not real-world
+accuracy. Use independent and time-aware evaluation for a real model.
 
-    cd services/mock-avalara-tax-code
-    python3 src/generate_data.py \
-      --output data/mock-tax-transactions-v1.csv \
-      --rows 600
+```bash
+python -c 'import pandas as pd; d=pd.read_csv("data/raw/mock-tax-transactions-v1.csv"); print(d.head()); print(d.label.value_counts())'
+```
 
-Each row contains:
+## 3. Configure shared DVC storage
 
-| Column | Use |
-|---|---|
-| transaction_id | Fictional row identifier beginning with MOCK |
-| item_description | Short synthetic product or service description |
-| product_category | Synthetic normalized product category |
-| amount | Fictional transaction amount |
-| destination_state | Example US state code |
-| exemption_certificate | Synthetic true or false feature |
-| customer_type | Commercial, government, or nonprofit |
-| label | Demonstration target class |
+A platform administrator supplies an approved bucket and project prefix:
 
-The generator deliberately omits names, email addresses, street addresses,
-taxpayer identifiers, payment details, and source-system identifiers.
+```bash
+dvc remote add -d datasets s3://APPROVED_BUCKET/mock-avalara-tax-model
+# For an approved S3-compatible store only:
+dvc remote modify --local datasets endpointurl https://APPROVED_ENDPOINT
+# Use environment/identity-based credentials; do not commit access keys.
+dvc push
+```
 
-Inspect the distribution:
+Commit the shared remote URL (.dvc/config), never .dvc/config.local or keys.
+The lab validation uses a local filesystem remote in config.local; it is
+not shared cloud storage. A new teammate configures access and runs dvc pull.
+This synthetic example can also regenerate its data with dvc repro without
+remote credentials. CI reproduces it without accessing private storage.
 
-    python3 - <<'PY'
-    import pandas as pd
-    frame = pd.read_csv("data/mock-tax-transactions-v1.csv")
-    print(frame.head())
-    print(frame["label"].value_counts())
-    print(frame.groupby("label")["amount"].describe())
-    PY
+## 4. Commit model changes in the model repository
 
-## 3. Create the development environment
+```bash
+git add src tests params.yaml dvc.yaml dvc.lock reports/metrics.json .dvc/config
+git commit -m "Qualify transaction classifier"
+git push -u origin model/improve-features
+```
 
-    python3 -m venv .venv
-    .venv/bin/pip install -r requirements.txt
-    .venv/bin/pytest -q
+Review code, metrics and data hashes in the model PR. Datasets and model
+binaries stay in DVC storage. For a changed experiment, run dvc repro,
+review dvc metrics diff and dvc params diff, then dvc push before sharing.
 
-The test verifies that data is balanced and synthetic, validates the training
-schema, fits the pipeline, and makes predictions.
+## 5. Register a qualified version in MLflow
 
-## 4. Develop the model
+From a clean, committed model checkout with the qualified DVC outputs:
 
-The sample pipeline applies:
+```bash
+export MODEL_NAME=mock-avalara-tax-code
+export DATASET_VERSION=mock-tax-transactions-v1
+export SOURCE_GIT_SHA="$(git rev-parse HEAD)"
+export MLFLOW_TRACKING_URI=https://mlflow.ai-platform.local
+python src/train.py --data data/raw/mock-tax-transactions-v1.csv --minimum-macro-f1 0.80
+```
 
-- TF-IDF to item_description
-- one-hot encoding to product, state, exemption, and customer categories
-- scaling to amount
-- balanced logistic regression
+This records the independent source repository/commit, dataset SHA256,
+dataset version, DVC lock hash, metrics, dvc.lock and params.yaml in MLflow.
+Record the new numeric version from the output. The earlier lab version 1
+predates the repository split; use a newly qualified version for new work.
 
-Data scientists can replace this implementation while preserving:
+## 6. Register with the platform
 
-- the input column contract
-- deterministic preprocessing
-- the three example output labels, or a reviewed catalog contract change
-- MLflow lineage tags
-- a numeric registered model version
-- the configured minimum macro F1
-- KServe V2-compatible model packaging
+In a separate platform checkout/PR, add the object in model-template.json
+to platform/model-catalog.json. Run scripts/sync_model_catalog.py and
+scripts/validate_model_catalog.py. The platform maintainer rolls out the
+catalog-bearing API and worker images. Do not copy model source into the
+platform repository. The sample catalog name is mock-avalara-tax-code.
 
-## 5. Train and upload to MLflow
+## 7. Request and verify deployment
 
-Set immutable lineage and the platform MLflow address:
-
-    export MODEL_NAME=mock-avalara-tax-code
-    export DATASET_VERSION=mock-tax-transactions-v1
-    export SOURCE_GIT_SHA="$(git rev-parse HEAD)"
-    export MLFLOW_TRACKING_URI=https://mlflow.ai-platform.local
-
-Run training:
-
-    .venv/bin/python src/train.py \
-      --data data/mock-tax-transactions-v1.csv \
-      --minimum-macro-f1 0.80
-
-The job validates the dataset, trains and evaluates the model, rejects a
-model below the threshold, logs metrics and a classification report, uploads
-the model artifacts, and creates a registered MLflow model version.
-
-Open <https://mlflow.ai-platform.local/> and verify:
-
-1. The experiment is mock-avalara-tax-category.
-2. The run contains source.git.commit and dataset.version tags.
-3. accuracy and macro_f1 are present.
-4. The registered model is mock-avalara-tax-code.
-5. The numeric version is Ready.
-
-## 6. Register the application with the platform
-
-After successful MLflow registration, append the object in
-model-template.json to the models array in platform/model-catalog.json.
-Then run from the repository root:
-
-    python3 scripts/sync_model_catalog.py
-    python3 scripts/validate_model_catalog.py
-    git diff --check
-
-Commit the model project and catalog update, push the branch, and open a pull
-request. CI validates the catalog, API, worker, agents, and GitOps manifests.
-A platform maintainer rolls out the catalog-bearing API and worker images.
-
-Do not add the generated CSV to Git. It is reproducible and should remain a
-local training artifact or be placed in an approved versioned data store.
-
-## 7. Request deployment
-
-After the catalog rollout:
-
-1. Open <https://api.ai-platform.local/portal/>.
-2. Sign in as demo-requester or demo-ml-engineer.
-3. Select Mock Avalara tax category classifier.
-4. Enter the Ready numeric MLflow version.
-5. Select Development.
-6. Submit the request.
-7. Sign out.
-8. Sign in as demo-approver.
-9. Review the model, version, environment, owner, and quality evidence.
-10. Approve with a meaningful reason.
-
-The worker validates the immutable MLflow model and lineage, then generates
-KServe, NetworkPolicy, Crossplane workspace, Kustomize, and Argo CD desired
-state. Argo CD reconciles it and CAIPE agents report Argo and Crossplane
-status to the portal.
-
-## 8. Validate the deployment
-
-The deployment is accepted only when:
-
-- the portal reports healthy or deployed
-- the serving Argo Application is Synced and Healthy
-- the request-linked ModelWorkspace is Ready
-- the KServe InferenceService is Ready
-- a V2 inference request returns one of the reviewed labels
-- audit events show different requester and approver identities
-
-Staging follows the same workflow after development acceptance. Production
-remains gated in this lab.
-
-## 9. Replace synthetic data safely
-
-Before using organizational data, define an approved data contract, owner,
-classification, retention period, permitted purpose, access group, lineage,
-quality checks, and deletion process. Remove or tokenize direct identifiers,
-keep credentials outside notebooks and Git, and use an approved versioned
-data store. A privacy and tax-domain review is required before any real
-transaction data or production use.
+Open https://api.ai-platform.local/portal/, sign in as demo-ml-engineer,
+select the model, a Ready numeric MLflow version and Development, and submit.
+A different demo-approver identity reviews and approves. The worker checks
+quality/lineage and writes GitOps resources. Require Argo Synced/Healthy,
+ModelWorkspace Ready and KServe InferenceService Ready, then run a V2
+prediction acceptance test before promotion. Repository creation is currently
+provided by the scaffold CLI and GitHub CLI; the portal requests deployment.
