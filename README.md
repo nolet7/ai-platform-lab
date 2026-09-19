@@ -27,7 +27,7 @@ The deployment runs on a three-node KIND cluster on one Windows machine. The
   Loki, and Tempo. Request IDs correlate audit records and logs.
 
 Development and staging releases have completed the request-to-inference path.
-The [acceptance checkpoint](docs/acceptance-progress-2026-09-18.md) records
+The [architecture reflection review](docs/architecture-reflection-review.md) records design decisions, corrections, and production gates. The [acceptance checkpoint](docs/acceptance-progress-2026-09-18.md) records
 evidence and remaining gaps. Distributed CAIPE tracing, automated rollback,
 and some security and failure-path audits remain open.
 
@@ -101,7 +101,8 @@ service:
 
     python3 scripts/scaffold_model.py fraud-risk-model \
       --display-name "Fraud risk model" \
-      --description "Scores transactions for fraud review"
+      --description "Scores transactions for fraud review" \
+      --owner tax-ml-team
 
 Implement and test the generated training contract, register a Ready numeric
 version in MLflow, and add its generated catalog entry to

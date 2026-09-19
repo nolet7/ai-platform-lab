@@ -122,6 +122,10 @@ def test_catalog_endpoint_is_authenticated_and_lists_models():
     try:
         response = TestClient(app).get("/catalog/models")
         assert response.status_code == 200
-        assert response.json()[0]["name"] == "tax-document-classifier"
+        model = response.json()[0]
+        assert model["name"] == "tax-document-classifier"
+        assert model["environments"] == ["dev", "staging"]
+        assert "storage_secret" not in model
+        assert "service_account" not in model
     finally:
         app.dependency_overrides.clear()

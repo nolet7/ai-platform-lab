@@ -36,6 +36,15 @@ def render_model_release_files(payload):
         raise ModelReleaseError("Invalid request ID") from error
     if not isinstance(reference, dict):
         raise ModelReleaseError("Missing immutable model reference")
+    macro_f1 = reference.get("macro_f1")
+    minimum_macro_f1 = model_config["minimum_macro_f1"]
+    if (
+        not isinstance(macro_f1, (int, float))
+        or macro_f1 < minimum_macro_f1
+    ):
+        raise ModelReleaseError(
+            f"Model macro F1 does not meet required {minimum_macro_f1}"
+        )
     model_id = reference.get("model_id")
     if not isinstance(model_id, str) or not MODEL_ID.fullmatch(model_id):
         raise ModelReleaseError("Invalid immutable model ID")

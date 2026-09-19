@@ -51,7 +51,7 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="AI Platform Control API",
-    version="0.4.6",
+    version="0.4.7",
     description=(
         "Enterprise control API for AI/ML deployments"
     ),
@@ -136,7 +136,14 @@ def model_catalog(
     principal: Principal = Depends(get_current_principal),
 ):
     del principal
-    return list(load_model_catalog().values())
+    public_fields = (
+        "name", "display_name", "description", "owner", "environments",
+        "minimum_macro_f1",
+    )
+    return [
+        {field: model[field] for field in public_fields}
+        for model in load_model_catalog().values()
+    ]
 
 
 @app.get("/health/live")

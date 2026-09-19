@@ -8,7 +8,13 @@
       "runtime": "kserve-mlserver",
       "service_account": "tax-classifier-serving",
       "storage_secret": "tax-classifier-s3",
-      "environments": ["dev", "staging"]
+      "environments": [
+        "dev",
+        "staging"
+      ],
+      "owner": "tax-ml-team",
+      "minimum_macro_f1": 0.8
     }
-  ]
+  ],
+  "schema_version": "1.0"
 }

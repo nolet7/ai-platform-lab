@@ -19,6 +19,7 @@ REFERENCE = {
     "source_git_sha": "c" * 40,
     "dataset_version": "synthetic-demo-v1",
     "storage_uri": "s3://mlflow-artifacts/2/models/" + MODEL_ID + "/artifacts",
+    "macro_f1": 0.95,
 }
 
 
@@ -53,6 +54,13 @@ class ModelReleaseWriterTests(unittest.TestCase):
 
     def test_blocks_direct_production(self):
         payload = {**self.payload, "environment": "prod"}
+        with self.assertRaises(ModelReleaseError):
+            render_model_release_files(payload)
+
+    def test_blocks_model_below_catalog_quality_threshold(self):
+        payload = {**self.payload, "model_reference": {
+            **REFERENCE, "macro_f1": 0.5
+        }}
         with self.assertRaises(ModelReleaseError):
             render_model_release_files(payload)
 

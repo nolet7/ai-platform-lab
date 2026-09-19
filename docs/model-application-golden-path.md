@@ -9,7 +9,8 @@ From the repository root:
 
     python3 scripts/scaffold_model.py fraud-risk-model \
       --display-name "Fraud risk model" \
-      --description "Scores transactions for fraud review"
+      --description "Scores transactions for fraud review" \
+      --owner tax-ml-team
 
 The command creates services/fraud-risk-model from the
 templates/mlflow-kserve-model directory. The generated project contains the
@@ -30,7 +31,7 @@ lineage.
 
 ## 3. Register the application
 
-Copy the generated model-template.json object into
+Copy the generated model-template.json (including owner and minimum macro F1) object into
 platform/model-catalog.json, then run:
 
     python3 scripts/sync_model_catalog.py
