@@ -1,5 +1,31 @@
 # Platform acceptance checkpoint - 2026-09-18
 
+## Data scientist and ML engineer golden path
+
+PR #26 aligned the portal and API with the deployment worker's supported
+contract. The UI and API now accept only the registered
+`tax-document-classifier`, positive integer model versions, valid tenant
+labels, and the currently supported development and staging environments.
+The portal hides the request form from identities without a data scientist,
+ML engineer, or platform administrator role. A dedicated
+`demo-ml-engineer` identity was added alongside the data scientist and
+independent approver identities.
+
+After CI passed, two live deployments exercised the complete path:
+
+| Requester role | Request | Environment | Result |
+|---|---|---|---|
+| Data scientist (`demo-requester`) | `48cf0c07-99ee-42db-9cbd-8a2ed975864f` | Development | Execution healthy; Argo Synced/Healthy; Crossplane Ready |
+| ML engineer (`demo-ml-engineer`) | `bc227b98-3b8c-457e-9922-f84a77ed2c55` | Staging | Execution healthy; Argo Synced/Healthy; Crossplane Ready |
+
+Both requests used immutable model version `1` and were approved by the
+separate `demo-approver` identity. The resulting development and staging
+KServe InferenceServices reported Ready, both request-linked
+`ModelWorkspace` resources reported Synced and Ready, and both serving
+Argo Applications reported Synced and Healthy. Portal/API tests verify that
+both requester roles may create requests and that unsupported production,
+model, version, and tenant inputs are rejected before dispatch.
+
 This is a progress report. The full project is not yet complete. All commands
 below ran against the existing three-node KIND cluster and the real WSL
 repository. The Windows clean URL checks used `curl.exe --ssl-no-revoke
