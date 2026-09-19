@@ -10,6 +10,7 @@ on:
       - "services/deployment-worker/**"
       - "services/platform-api/**"
       - "services/caipe-agent/**"
+      - "services/mock-avalara-tax-category-classifier/**"
       - "scripts/configure_portal_oidc.py"
       - "scripts/check_gitops_secrets.py"
       - "platform/model-catalog.json"
@@ -27,6 +28,7 @@ on:
       - "services/deployment-worker/**"
       - "services/platform-api/**"
       - "services/caipe-agent/**"
+      - "services/mock-avalara-tax-category-classifier/**"
       - "scripts/configure_portal_oidc.py"
       - "scripts/check_gitops_secrets.py"
       - "platform/model-catalog.json"
@@ -186,3 +188,20 @@ jobs:
           CAIPE_AGENT_KIND: argo
           CAIPE_INTERNAL_TOKEN: test-only-token
         run: python -m pytest -q tests
+
+  mock-avalara-sample-tests:
+    name: Mock Avalara sample tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install sample dependencies
+        run: python -m pip install -r services/mock-avalara-tax-category-classifier/requirements.txt
+      - name: Generate synthetic data and test the sample
+        working-directory: services/mock-avalara-tax-category-classifier
+        run: |
+          python src/generate_data.py --output data/mock-tax-transactions-v1.csv --rows 600
+          python -m pytest -q

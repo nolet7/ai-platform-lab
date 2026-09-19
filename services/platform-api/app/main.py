@@ -51,7 +51,7 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="AI Platform Control API",
-    version="0.4.8",
+    version="0.4.9",
     description=(
         "Enterprise control API for AI/ML deployments"
     ),
