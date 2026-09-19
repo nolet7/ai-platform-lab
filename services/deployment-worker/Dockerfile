@@ -8,6 +8,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /app
 
 COPY requirements.txt .
+COPY model-catalog.json /app/model-catalog.json
 
 RUN python -m pip install \
     --no-cache-dir \

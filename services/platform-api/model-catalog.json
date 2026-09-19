@@ -1,0 +1,14 @@
+{
+  "models": [
+    {
+      "name": "tax-document-classifier",
+      "display_name": "Tax document classifier",
+      "description": "Classifies W-2, invoice, and receipt documents.",
+      "model_format": "mlflow",
+      "runtime": "kserve-mlserver",
+      "service_account": "tax-classifier-serving",
+      "storage_secret": "tax-classifier-s3",
+      "environments": ["dev", "staging"]
+    }
+  ]
+}

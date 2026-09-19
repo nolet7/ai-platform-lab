@@ -56,6 +56,21 @@ Grafana, and Keycloak administrator credentials are stored in their respective
 Kubernetes bootstrap Secrets. Never copy them into this repository. See the
 [demo runbook](docs/demo-runbook.md) for the sign-in and approval sequence.
 
+## Onboard a new model application
+
+Use the reusable MLflow/KServe template instead of copying an existing
+service:
+
+    python3 scripts/scaffold_model.py fraud-risk-model \
+      --display-name "Fraud risk model" \
+      --description "Scores transactions for fraud review"
+
+Implement and test the generated training contract, register a Ready numeric
+version in MLflow, and add its generated catalog entry to
+platform/model-catalog.json. The portal reads that catalog and the worker
+uses its runtime, storage, and service-account settings when producing
+GitOps resources. See docs/model-application-golden-path.md.
+
 ## Request-to-deployment flow
 
 ```mermaid

@@ -4,6 +4,7 @@ import re
 from uuid import UUID
 
 from .config import GITHUB_BRANCH, GITHUB_REPOSITORY
+from .model_catalog import get_model_config
 from .model_registry import GIT_SHA, MODEL_ID, RUN_ID, VERSION
 
 
@@ -20,12 +21,13 @@ def render_model_release_files(payload):
     environment = payload.get("environment")
     version = payload.get("model_version")
     reference = payload.get("model_reference")
-    if name != "tax-document-classifier":
-        raise ModelReleaseError("Unsupported KServe model")
+    model_config = get_model_config(name)
+    if model_config is None:
+        raise ModelReleaseError("Model is not registered in the platform catalog")
     if not isinstance(tenant, str) or not DNS_LABEL.fullmatch(tenant):
         raise ModelReleaseError("Invalid tenant")
-    if environment not in {"dev", "staging"}:
-        raise ModelReleaseError("Production requires a verified staging gate")
+    if environment not in set(model_config["environments"]):
+        raise ModelReleaseError("Environment is not enabled for this model")
     if not isinstance(version, str) or not VERSION.fullmatch(version):
         raise ModelReleaseError("Version must be numeric")
     try:
@@ -88,17 +90,17 @@ metadata:
     ai-platform.io/dataset-version: {dataset}
   annotations:
     serving.kserve.io/deploymentMode: Standard
-    serving.kserve.io/secretName: tax-classifier-s3
+    serving.kserve.io/secretName: {model_config["storage_secret"]}
     ai-platform.io/request-id: "{request_id}"
     ai-platform.io/run-id: "{run_id}"
     ai-platform.io/source-git-sha: "{source_sha}"
 spec:
   predictor:
-    serviceAccountName: tax-classifier-serving
+    serviceAccountName: {model_config["service_account"]}
     model:
       modelFormat:
-        name: mlflow
-      runtime: kserve-mlserver
+        name: {model_config["model_format"]}
+      runtime: {model_config["runtime"]}
       protocolVersion: v2
       storageUri: {uri}
       resources:

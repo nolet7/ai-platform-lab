@@ -1,6 +1,8 @@
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
+
+from .model_catalog import get_model_config
 
 
 class DeploymentRequest(BaseModel):
@@ -9,7 +11,7 @@ class DeploymentRequest(BaseModel):
         pattern=r"^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$",
     )
 
-    model_name: Literal["tax-document-classifier"]
+    model_name: str = Field(pattern=r"^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$")
 
     model_version: str = Field(
         pattern=r"^[1-9][0-9]*$",
@@ -19,6 +21,15 @@ class DeploymentRequest(BaseModel):
         "dev",
         "staging",
     ]
+
+    @model_validator(mode="after")
+    def catalog_allows_request(self):
+        config = get_model_config(self.model_name)
+        if config is None:
+            raise ValueError("Model is not registered in the platform catalog")
+        if self.environment not in config["environments"]:
+            raise ValueError("Environment is not enabled for this model")
+        return self
 
 
 class DeploymentAccepted(BaseModel):

@@ -31,7 +31,7 @@ spec:
 
       containers:
         - name: platform-api
-          image: ai-platform-api:0.4.5
+          image: ai-platform-api:0.4.6
           imagePullPolicy: IfNotPresent
 
           ports:

@@ -28,7 +28,7 @@ spec:
 
       containers:
         - name: dispatcher
-          image: ai-platform-deployment-worker:0.3.8
+          image: ai-platform-deployment-worker:0.3.9
           imagePullPolicy: IfNotPresent
 
           command:
