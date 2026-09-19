@@ -240,3 +240,9 @@ The [2026-09-18 acceptance report](docs/acceptance-progress-2026-09-18.md)
 is the current verification snapshot. The older
 [requirements matrix](docs/requirements-matrix.md) and
 [platform audit](docs/platform-audit.md) are historical checkpoints.
+
+## Request a model project
+
+Use [Backstage](https://backstage.127.0.0.1.nip.io/create) to create an independent
+private GitHub repository with DVC and MinIO storage. See the
+[project request guide](docs/backstage-project-requests.md).

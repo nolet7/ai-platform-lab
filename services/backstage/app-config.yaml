@@ -1,0 +1,58 @@
+enableExperimentalRedirectFlow: true
+app:
+  title: AI Platform
+  baseUrl: https://backstage.127.0.0.1.nip.io
+  packages: all
+  extensions:
+    - page:catalog:
+        config:
+          path: /
+organization:
+  name: AI Platform Lab
+backend:
+  baseUrl: https://backstage.127.0.0.1.nip.io
+  listen:
+    port: 7007
+    host: 0.0.0.0
+  cors:
+    origin: https://backstage.127.0.0.1.nip.io
+    credentials: true
+  database:
+    client: pg
+    connection:
+      host: backstage-postgres
+      port: 5432
+      user: backstage
+      password: ${POSTGRES_PASSWORD}
+  reading:
+    allow:
+      - host: github.com
+integrations:
+  github:
+    - host: github.com
+      token: ${GITHUB_TOKEN}
+auth:
+  environment: production
+  session:
+    secret: ${AUTH_SESSION_SECRET}
+  providers:
+    oidc:
+      production:
+        metadataUrl: https://keycloak.ai-platform.local/realms/ai-platform/.well-known/openid-configuration
+        clientId: backstage
+        clientSecret: ${AUTH_OIDC_CLIENT_SECRET}
+        prompt: auto
+catalog:
+  rules:
+    - allow: [Component, Location]
+  locations:
+    - type: file
+      target: /app/catalog/org.yaml
+      rules:
+        - allow: [User, Group]
+    - type: file
+      target: /app/templates/ml-project/template.yaml
+      rules:
+        - allow: [Template]
+permission:
+  enabled: true

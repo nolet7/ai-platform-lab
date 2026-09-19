@@ -1,0 +1,12 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: ${{ values.name }}
+  title: ${{ values.displayName | dump }}
+  description: ${{ values.description | dump }}
+  annotations:
+    github.com/project-slug: nolet7/${{ values.name }}
+spec:
+  type: machine-learning
+  lifecycle: experimental
+  owner: group:default/tax-ml-team

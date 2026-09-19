@@ -1,0 +1,15 @@
+{
+  "name": ${{ values.name | dump }},
+  "display_name": ${{ values.displayName | dump }},
+  "description": ${{ values.description | dump }},
+  "model_format": "mlflow",
+  "runtime": "kserve-mlserver",
+  "service_account": "tax-classifier-serving",
+  "storage_secret": "tax-classifier-s3",
+  "environments": [
+    "dev",
+    "staging"
+  ],
+  "owner": "tax-ml-team",
+  "minimum_macro_f1": 0.8
+}

@@ -3,7 +3,13 @@
 This is the supported route for a data scientist or ML engineer to onboard
 and deploy a new MLflow model through the AI Platform.
 
-## 1. Scaffold the model project
+## 1. Request the model repository
+
+Open https://backstage.127.0.0.1.nip.io/create and choose Create an ML project.
+Submit a unique name, title and purpose. Backstage publishes a private GitHub
+repository and registers it in the catalog. Follow [the request walkthrough](backstage-project-requests.md).
+
+### CLI alternative
 
 From the repository root:
 

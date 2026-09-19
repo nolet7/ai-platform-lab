@@ -1,0 +1,54 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: minio-edge-tls
+  namespace: ml-platform
+spec:
+  secretName: minio-edge-tls
+  duration: 2160h
+  renewBefore: 360h
+  dnsNames:
+    - minio.127.0.0.1.nip.io
+  privateKey:
+    algorithm: RSA
+    size: 2048
+    rotationPolicy: Always
+  usages:
+    - server auth
+    - digital signature
+    - key encipherment
+  issuerRef:
+    name: ai-platform-ca
+    kind: ClusterIssuer
+    group: cert-manager.io
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: minio-clean-url
+  namespace: ml-platform
+  annotations:
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+
+    nginx.ingress.kubernetes.io/proxy-body-size: "0"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "30"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - minio.127.0.0.1.nip.io
+      secretName: minio-edge-tls
+  rules:
+    - host: minio.127.0.0.1.nip.io
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: minio
+                port:
+                  number: 9000
