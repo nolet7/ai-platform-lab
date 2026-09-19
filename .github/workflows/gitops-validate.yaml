@@ -12,6 +12,10 @@ on:
       - "services/caipe-agent/**"
       - "scripts/configure_portal_oidc.py"
       - "scripts/check_gitops_secrets.py"
+      - "platform/model-catalog.json"
+      - "templates/**"
+      - "scripts/scaffold_model.py"
+      - "scripts/validate_model_catalog.py"
       - ".github/workflows/gitops-validate.yaml"
 
   push:
@@ -25,6 +29,10 @@ on:
       - "services/caipe-agent/**"
       - "scripts/configure_portal_oidc.py"
       - "scripts/check_gitops_secrets.py"
+      - "platform/model-catalog.json"
+      - "templates/**"
+      - "scripts/scaffold_model.py"
+      - "scripts/validate_model_catalog.py"
       - ".github/workflows/gitops-validate.yaml"
 
 permissions:
