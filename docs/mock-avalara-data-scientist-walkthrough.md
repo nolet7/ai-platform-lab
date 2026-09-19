@@ -43,23 +43,20 @@ accuracy. Use independent and time-aware evaluation for a real model.
 python -c 'import pandas as pd; d=pd.read_csv("data/raw/mock-tax-transactions-v1.csv"); print(d.head()); print(d.label.value_counts())'
 ```
 
-## 3. Configure shared DVC storage
+## 3. Use MinIO DVC storage
 
-A platform administrator supplies an approved bucket and project prefix:
+The default remote is s3://ai-platform-dvc/tax-ml-team/mock-avalara-tax-model
+at https://minio.127.0.0.1.nip.io. Obtain the team-scoped MinIO credentials and
+CA certificate from the platform administrator. Set AWS_ACCESS_KEY_ID,
+AWS_SECRET_ACCESS_KEY, AWS_DEFAULT_REGION=us-east-1 and AWS_CA_BUNDLE.
+Run `dvc push` to share artifacts and `dvc pull` from another checkout.
+Never commit credentials or .dvc/config.local.
 
-```bash
-dvc remote add -d datasets s3://APPROVED_BUCKET/mock-avalara-tax-model
-# For an approved S3-compatible store only:
-dvc remote modify --local datasets endpointurl https://APPROVED_ENDPOINT
-# Use environment/identity-based credentials; do not commit access keys.
-dvc push
-```
+For WSL without access to the Windows HTTPS forward, run a MinIO port-forward
+on 19000 and `dvc remote modify --local minio endpointurl http://127.0.0.1:19000`.
+MinIO push and fresh-clone recovery have been verified for this sample.
 
-Commit the shared remote URL (.dvc/config), never .dvc/config.local or keys.
-The lab validation uses a local filesystem remote in config.local; it is
-not shared cloud storage. A new teammate configures access and runs dvc pull.
-This synthetic example can also regenerate its data with dvc repro without
-remote credentials. CI reproduces it without accessing private storage.
+New projects can be requested at https://backstage.127.0.0.1.nip.io/create.
 
 ## 4. Commit model changes in the model repository
 
@@ -105,5 +102,6 @@ select the model, a Ready numeric MLflow version and Development, and submit.
 A different demo-approver identity reviews and approves. The worker checks
 quality/lineage and writes GitOps resources. Require Argo Synced/Healthy,
 ModelWorkspace Ready and KServe InferenceService Ready, then run a V2
-prediction acceptance test before promotion. Repository creation is currently
-provided by the scaffold CLI and GitHub CLI; the portal requests deployment.
+prediction acceptance test before promotion. New repository requests are provided by Backstage at
+https://backstage.127.0.0.1.nip.io/create; the deployment portal separately
+governs model deployment requests.
