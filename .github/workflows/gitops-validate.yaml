@@ -12,10 +12,6 @@ on:
       - "services/caipe-agent/**"
       - "scripts/configure_portal_oidc.py"
       - "scripts/check_gitops_secrets.py"
-      - "platform/model-catalog.json"
-      - "templates/**"
-      - "scripts/scaffold_model.py"
-      - "scripts/validate_model_catalog.py"
       - ".github/workflows/gitops-validate.yaml"
 
   push:
@@ -29,10 +25,6 @@ on:
       - "services/caipe-agent/**"
       - "scripts/configure_portal_oidc.py"
       - "scripts/check_gitops_secrets.py"
-      - "platform/model-catalog.json"
-      - "templates/**"
-      - "scripts/scaffold_model.py"
-      - "scripts/validate_model_catalog.py"
       - ".github/workflows/gitops-validate.yaml"
 
 permissions:
@@ -114,10 +106,6 @@ jobs:
           python3 -m venv /tmp/gitops-validation
           /tmp/gitops-validation/bin/pip install --disable-pip-version-check PyYAML==6.0.3
           /tmp/gitops-validation/bin/python scripts/check_gitops_secrets.py
-      - "platform/model-catalog.json"
-      - "templates/**"
-      - "scripts/scaffold_model.py"
-      - "scripts/validate_model_catalog.py"
       - name: Reject committed PEM private keys
         shell: bash
         run: |
