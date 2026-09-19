@@ -127,5 +127,6 @@ def test_catalog_endpoint_is_authenticated_and_lists_models():
         assert model["environments"] == ["dev", "staging"]
         assert "storage_secret" not in model
         assert "service_account" not in model
+        assert response.headers["cache-control"] == "no-store"
     finally:
         app.dependency_overrides.clear()

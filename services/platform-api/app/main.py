@@ -51,11 +51,22 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="AI Platform Control API",
-    version="0.4.7",
+    version="0.4.8",
     description=(
         "Enterprise control API for AI/ML deployments"
     ),
 )
+
+
+@app.middleware("http")
+async def prevent_protected_response_caching(request, call_next):
+    response = await call_next(request)
+    if request.url.path in {"/me", "/catalog/models"} or (
+        request.url.path.startswith("/deployments")
+    ):
+        response.headers["Cache-Control"] = "no-store"
+        response.headers["Pragma"] = "no-cache"
+    return response
 
 
 def deployment_response(

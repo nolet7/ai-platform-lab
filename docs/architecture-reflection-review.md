@@ -18,7 +18,7 @@ observability, supply chain, and operational recovery.
 | Separation of duties | Sound | Continue to reject self-approval and record requester, approver, and reason |
 | Tenancy | Sound for the local lab | Retain tenant claims, API filtering, and tenant labels; broader namespace-level tenant isolation remains future work |
 | Model onboarding | Improved | Use a versioned declarative catalog and generated project instead of Python allowlists or copied services |
-| Public catalog API | Corrected | Return user-facing model metadata only; do not expose Kubernetes service accounts or Secret names |
+| Public catalog API | Corrected | Return user-facing model metadata only; do not expose Kubernetes service accounts or Secret names; prevent protected response caching |
 | Environment policy | Corrected | Populate the portal environment selector from the selected catalog model and validate it again in the API and worker |
 | Model quality | Corrected | Enforce the catalog minimum macro F1 before rendering a release instead of recording the metric without a gate |
 | Immutable lineage | Sound | Require numeric Ready MLflow versions, immutable model and run IDs, source commit, dataset version, and matching artifact URI |
