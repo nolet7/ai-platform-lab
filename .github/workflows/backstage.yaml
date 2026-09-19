@@ -1,0 +1,30 @@
+name: Backstage validation
+on:
+  pull_request:
+    paths: ['services/backstage/**', 'templates/mlflow-kserve-model/**', 'scripts/sync_backstage_template.py', '.github/workflows/backstage.yaml']
+  push:
+    branches: [main]
+    paths: ['services/backstage/**', 'templates/mlflow-kserve-model/**', 'scripts/sync_backstage_template.py', '.github/workflows/backstage.yaml']
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: services/backstage
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node .yarn/releases/yarn-4.13.0.cjs install --immutable
+      - run: node .yarn/releases/yarn-4.13.0.cjs tsc
+      - run: node .yarn/releases/yarn-4.13.0.cjs workspace backend test --watch=false --runInBand
+      - run: node .yarn/releases/yarn-4.13.0.cjs build:backend
+      - name: Check shared template synchronization
+        working-directory: .
+        run: |
+          python3 scripts/sync_backstage_template.py
+          git diff --exit-code -- services/backstage/templates/ml-project/skeleton

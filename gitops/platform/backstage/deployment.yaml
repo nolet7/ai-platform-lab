@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backstage
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backstage
+  template:
+    metadata:
+      labels:
+        app: backstage
+    spec:
+      automountServiceAccountToken: false
+      hostAliases:
+        # Local lab ingress service; update when rebuilding the cluster.
+        - ip: 10.96.198.116
+          hostnames: [keycloak.ai-platform.local]
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: backstage
+          image: ai-platform-backstage:0.1.2
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 7007
+          envFrom:
+            - secretRef:
+                name: backstage-secrets
+          env:
+            - name: APP_CONFIG_enableExperimentalRedirectFlow
+              value: "true"
+            - name: NODE_EXTRA_CA_CERTS
+              value: /etc/platform-ca/ca.crt
+          resources:
+            requests: {cpu: 250m, memory: 512Mi}
+            limits: {cpu: '2', memory: 2Gi}
+          startupProbe:
+            httpGet: {path: /.backstage/health/v1/readiness, port: http}
+            periodSeconds: 5
+            failureThreshold: 60
+          readinessProbe:
+            httpGet: {path: /.backstage/health/v1/readiness, port: http}
+            periodSeconds: 10
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: ca
+              mountPath: /etc/platform-ca
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: ca
+          configMap:
+            name: backstage-ca
+        - name: tmp
+          emptyDir: {}

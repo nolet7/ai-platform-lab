@@ -1,0 +1,4 @@
+seed: 20260919
+rows: 600
+minimum_macro_f1: 0.80
+dataset_version: mock-tax-transactions-v1
