@@ -4,7 +4,7 @@ import rego.v1
 
 
 allowed_use_cases := {
-    "avalara-tax-team": {
+    "taxtech-tax-team": {
         "tax-compliance-assistant",
     },
 
@@ -42,7 +42,7 @@ classification_allowed if {
 classification_allowed if {
     input.data_classification == "confidential"
     input.tenant_id in {
-        "avalara-tax-team",
+        "taxtech-tax-team",
         "compliance-team",
     }
 }

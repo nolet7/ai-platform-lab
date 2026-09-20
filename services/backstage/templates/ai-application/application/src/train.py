@@ -80,7 +80,7 @@ def main():
             f"macro F1 {macro_f1:.3f} is below {args.minimum_macro_f1:.3f}"
         )
     mlflow.set_tracking_uri(TRACKING_URI)
-    mlflow.set_experiment("mock-avalara-tax-category")
+    mlflow.set_experiment("mock-taxtech-tax-category")
     with mlflow.start_run(run_name=f"{MODEL_NAME}-{DATASET_VERSION}") as run:
         mlflow.set_tags({
             "platform": "ai-platform-lab",
@@ -103,7 +103,7 @@ def main():
             "random_state": 42,
         })
         mlflow.log_metrics({"accuracy": accuracy, "macro_f1": macro_f1})
-        report = Path("/tmp/mock-avalara-classification-report.json")
+        report = Path("/tmp/mock-taxtech-classification-report.json")
         report.write_text(json.dumps(
             classification_report(y_test, predictions, output_dict=True),
             indent=2,

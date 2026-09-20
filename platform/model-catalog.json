@@ -16,8 +16,8 @@
       "minimum_macro_f1": 0.8
     },
     {
-      "name": "mock-avalara-tax-code",
-      "display_name": "Mock Avalara tax category classifier",
+      "name": "mock-taxtech-tax-code",
+      "display_name": "Mock TaxTech tax category classifier",
       "description": "Classifies fictional transactions into demonstration tax categories.",
       "model_format": "mlflow",
       "runtime": "kserve-mlserver",

@@ -112,14 +112,15 @@ GitOps resources. See docs/model-application-golden-path.md.
 
 ## Worked data scientist example
 
-The repository includes a complete fictional tax-transaction example in
-`https://github.com/nolet7/mock-avalara-tax-model`. It generates privacy-safe
+The repository includes a complete fictional tax-transaction golden template.
+Create an independent `mock-taxtech-tax-model` repository through Backstage
+before following the walkthrough. The template generates privacy-safe
 synthetic data, trains and evaluates a scikit-learn pipeline, enforces the
 catalog quality threshold, and registers the model in MLflow. Follow the
-[Mock Avalara data scientist walkthrough](docs/mock-avalara-data-scientist-walkthrough.md)
+[Mock TaxTech data scientist walkthrough](docs/mock-taxtech-data-scientist-walkthrough.md)
 for detailed commands from dataset creation through portal deployment.
 
-The example is not an Avalara product and is not suitable for tax advice,
+The example is not suitable for tax advice,
 compliance decisions, or production filing.
 
 ## Request-to-deployment flow

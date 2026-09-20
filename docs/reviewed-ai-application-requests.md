@@ -68,7 +68,7 @@ branch protection governs normal pushes and merges, not GitHub account ownership
 ## Platform implementation and rollout
 
 The implementation itself is reviewed in a platform PR. This PR targets Backstage image
-`ai-platform-backstage:0.2.0`. Rebuild from services/backstage after
+`ai-platform-backstage:0.2.1`. Rebuild from services/backstage after
 install/typecheck/test/build:backend when the code changes, and load it onto the KIND
 nodes before rolling out gitops/platform/backstage/deployment.yaml. Existing Docker
 build copies the complete templates directory. After approved merge and rollout, confirm
