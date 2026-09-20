@@ -1,0 +1,33 @@
+# Submit this file in a reviewed PR to the platform GitOps repository.
+# It is deliberately outside environments/dev and is not applied by application CI.
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: ${{ values.name }}
+  namespace: argocd
+spec:
+  sourceRepos: ['https://github.com/${{ values.githubOwner }}/${{ values.name }}-gitops.git']
+  destinations:
+    - server: https://kubernetes.default.svc
+      namespace: ${{ values.name }}-dev
+  namespaceResourceWhitelist:
+    - {group: apps, kind: Deployment}
+    - {group: '', kind: Service}
+  clusterResourceWhitelist: []
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ${{ values.name }}-dev
+  namespace: argocd
+spec:
+  project: ${{ values.name }}
+  source:
+    repoURL: https://github.com/${{ values.githubOwner }}/${{ values.name }}-gitops.git
+    targetRevision: main
+    path: environments/dev
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: ${{ values.name }}-dev
+  syncPolicy:
+    automated: {prune: true, selfHeal: true}

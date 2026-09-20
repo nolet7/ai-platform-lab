@@ -1,0 +1,193 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: reviewed-ai-application
+  title: Request an AI application
+  description: Create separate private application and deployment repositories, each protected by review and CI, with initial
+    pull requests.
+  tags:
+  - ai
+  - python
+  - gitops
+  - review-required
+spec:
+  owner: group:default/platform-team
+  type: service
+  parameters:
+  - title: Application request
+    required:
+    - name
+    - description
+    - githubOwner
+    - reviewer
+    - team
+    properties:
+      name:
+        title: Application name
+        type: string
+        pattern: ^[a-z][a-z0-9-]{2,40}$
+      description:
+        title: Purpose
+        type: string
+        maxLength: 500
+      githubOwner:
+        title: GitHub owner or organization
+        type: string
+        default: nolet7
+        pattern: ^[A-Za-z0-9][A-Za-z0-9-]{0,38}$
+        description: Must support protected private repositories and be accessible to the platform integration.
+      reviewer:
+        title: Independent GitHub reviewer
+        type: string
+        pattern: ^[A-Za-z0-9][A-Za-z0-9-]{0,38}$
+        description: Use another person, not the platform token owner. They must accept the repository collaborator invitation
+          before approving.
+      team:
+        title: Owning platform team
+        type: string
+        enum:
+        - tax-ml-team
+        - developers
+        default: tax-ml-team
+  steps:
+  - id: bootstrap-application
+    name: Prepare application repository governance
+    action: fetch:template
+    input:
+      url: ./bootstrap
+      targetPath: bootstrap-application
+      values:
+        name: ${{ parameters.name }}
+        description: ${{ parameters.description }}
+        githubOwner: ${{ parameters.githubOwner }}
+        reviewer: ${{ parameters.reviewer }}
+        team: ${{ parameters.team }}
+        repoName: ${{ parameters.name }}
+  - id: create-application
+    name: Create private application repository
+    action: publish:github
+    input:
+      repoUrl: github.com?owner=${{ parameters.githubOwner }}&repo=${{ parameters.name }}
+      sourcePath: bootstrap-application
+      description: ${{ parameters.description }}
+      repoVisibility: private
+      defaultBranch: main
+      protectDefaultBranch: false
+      allowAutoMerge: false
+      allowMergeCommit: false
+      allowRebaseMerge: false
+      allowSquashMerge: true
+      deleteBranchOnMerge: true
+      collaborators:
+      - user: ${{ parameters.reviewer }}
+        access: push
+      gitCommitMessage: Initialize repository governance; application changes require review
+  - id: protect-application
+    name: Require and verify review on application main
+    action: platform:github:require-review
+    input:
+      owner: ${{ parameters.githubOwner }}
+      repo: ${{ parameters.name }}
+      check: application-ci
+  - id: bootstrap-deployment
+    name: Prepare deployment repository governance
+    action: fetch:template
+    input:
+      url: ./bootstrap
+      targetPath: bootstrap-deployment
+      values:
+        name: ${{ parameters.name }}
+        description: ${{ parameters.description }}
+        githubOwner: ${{ parameters.githubOwner }}
+        reviewer: ${{ parameters.reviewer }}
+        team: ${{ parameters.team }}
+        repoName: ${{ parameters.name }}-gitops
+  - id: create-deployment
+    name: Create private deployment repository
+    action: publish:github
+    input:
+      repoUrl: github.com?owner=${{ parameters.githubOwner }}&repo=${{ parameters.name }}-gitops
+      sourcePath: bootstrap-deployment
+      description: ${{ parameters.description }}
+      repoVisibility: private
+      defaultBranch: main
+      protectDefaultBranch: false
+      allowAutoMerge: false
+      allowMergeCommit: false
+      allowRebaseMerge: false
+      allowSquashMerge: true
+      deleteBranchOnMerge: true
+      collaborators:
+      - user: ${{ parameters.reviewer }}
+        access: push
+      gitCommitMessage: Initialize repository governance; application changes require review
+  - id: protect-deployment
+    name: Require and verify review on deployment main
+    action: platform:github:require-review
+    input:
+      owner: ${{ parameters.githubOwner }}
+      repo: ${{ parameters.name }}-gitops
+      check: deployment-ci
+  - id: fetch-application
+    name: Render application golden template
+    action: fetch:template
+    input:
+      url: ./application
+      targetPath: application
+      values: &id001
+        name: ${{ parameters.name }}
+        description: ${{ parameters.description }}
+        githubOwner: ${{ parameters.githubOwner }}
+        reviewer: ${{ parameters.reviewer }}
+        team: ${{ parameters.team }}
+      copyWithoutTemplating:
+      - .github/workflows/**
+  - id: review-application
+    name: Open application review pull request
+    action: publish:github:pull-request
+    input:
+      repoUrl: github.com?owner=${{ parameters.githubOwner }}&repo=${{ parameters.name }}
+      sourcePath: application
+      branchName: scaffold/initial-application
+      targetBranchName: main
+      title: Review initial AI application golden template
+      description: Review the generated starter, CI, ownership and deployment settings. Main requires a code-owner approval
+        and successful CI. No automatic merge.
+      draft: false
+  - id: fetch-deployment
+    name: Render deployment golden template
+    action: fetch:template
+    input:
+      url: ./deployment
+      targetPath: deployment
+      values: *id001
+      copyWithoutTemplating:
+      - .github/workflows/**
+  - id: review-deployment
+    name: Open deployment review pull request
+    action: publish:github:pull-request
+    input:
+      repoUrl: github.com?owner=${{ parameters.githubOwner }}&repo=${{ parameters.name }}-gitops
+      sourcePath: deployment
+      branchName: scaffold/initial-application
+      targetBranchName: main
+      title: Review initial AI deployment golden template
+      description: Review the generated starter, CI, ownership and deployment settings. Main requires a code-owner approval
+        and successful CI. No automatic merge.
+      draft: false
+  - id: register
+    name: Register requested application
+    action: catalog:register
+    input:
+      repoContentsUrl: ${{ steps["create-application"].output.repoContentsUrl }}
+      catalogInfoPath: /catalog-info.yaml
+  output:
+    links:
+    - title: Application repository
+      url: ${{ steps["create-application"].output.remoteUrl }}
+    - title: Review application pull request
+      url: ${{ steps["review-application"].output.remoteUrl }}
+    - title: Deployment repository
+      url: ${{ steps["create-deployment"].output.remoteUrl }}
+    - title: Review deployment pull request
+      url: ${{ steps["review-deployment"].output.remoteUrl }}

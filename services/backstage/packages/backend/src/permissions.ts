@@ -17,7 +17,7 @@ export class ProjectPolicy implements PermissionPolicy {
       return { result: AuthorizeResult.DENY };
     }
     if (request.permission.name === 'scaffolder.task.create' || request.permission.name === 'catalog.location.create' || request.permission.name === 'catalog.entity.create') {
-      return { result: groups.includes('group:default/tax-ml-team') ? AuthorizeResult.ALLOW : AuthorizeResult.DENY };
+      return { result: groups.some(group => ['group:default/tax-ml-team', 'group:default/developers'].includes(group)) ? AuthorizeResult.ALLOW : AuthorizeResult.DENY };
     }
     return { result: AuthorizeResult.ALLOW };
   }

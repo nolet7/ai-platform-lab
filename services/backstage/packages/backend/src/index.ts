@@ -1,7 +1,9 @@
 import { createBackend } from '@backstage/backend-defaults';
 import { oidcModule } from './oidc';
 import { permissionModule } from './permissions';
+import { reviewProtectionModule } from './reviewProtection';
 const backend = createBackend();
+backend.add(reviewProtectionModule);
 backend.add(import('@backstage/plugin-app-backend'));
 backend.add(import('@backstage/plugin-auth-backend'));
 backend.add(oidcModule);

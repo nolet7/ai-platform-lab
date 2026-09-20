@@ -1,0 +1,6 @@
+[core]
+    remote = minio
+    analytics = false
+['remote "minio"']
+    url = s3://ai-platform-dvc/${{ values.team }}/${{ values.name }}
+    endpointurl = https://minio.127.0.0.1.nip.io

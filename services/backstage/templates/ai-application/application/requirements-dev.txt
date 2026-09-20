@@ -1,0 +1,4 @@
+-r requirements.txt
+dvc[s3]==3.63.0
+# DVC 3.63 imports pathspec APIs removed in newer releases.
+pathspec==0.12.1

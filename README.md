@@ -246,3 +246,10 @@ is the current verification snapshot. The older
 Use [Backstage](https://backstage.127.0.0.1.nip.io/create) to create an independent
 private GitHub repository with DVC and MinIO storage. See the
 [project request guide](docs/backstage-project-requests.md).
+
+## Request a reviewed AI application
+
+The new [AI application request workflow](docs/reviewed-ai-application-requests.md)
+creates separate application and deployment repositories with initial review PRs,
+required CI and protected main branches. Private repository protection requires
+a supported GitHub plan.

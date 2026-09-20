@@ -26,7 +26,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: backstage
-          image: ai-platform-backstage:0.1.2
+          image: ai-platform-backstage:0.2.0
           imagePullPolicy: IfNotPresent
           ports:
             - name: http

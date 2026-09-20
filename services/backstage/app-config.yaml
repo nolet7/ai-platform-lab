@@ -54,5 +54,9 @@ catalog:
       target: /app/templates/ml-project/template.yaml
       rules:
         - allow: [Template]
+    - type: file
+      target: /app/templates/ai-application/template.yaml
+      rules:
+        - allow: [Template]
 permission:
   enabled: true

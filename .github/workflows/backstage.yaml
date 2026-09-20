@@ -1,10 +1,10 @@
 name: Backstage validation
 on:
   pull_request:
-    paths: ['services/backstage/**', 'templates/mlflow-kserve-model/**', 'scripts/sync_backstage_template.py', '.github/workflows/backstage.yaml']
+    paths: ['services/backstage/**', 'templates/mlflow-kserve-model/**', 'scripts/sync_backstage_template.py', 'scripts/tests/test_ai_application_template.py', '.github/workflows/backstage.yaml']
   push:
     branches: [main]
-    paths: ['services/backstage/**', 'templates/mlflow-kserve-model/**', 'scripts/sync_backstage_template.py', '.github/workflows/backstage.yaml']
+    paths: ['services/backstage/**', 'templates/mlflow-kserve-model/**', 'scripts/sync_backstage_template.py', 'scripts/tests/test_ai_application_template.py', '.github/workflows/backstage.yaml']
 permissions:
   contents: read
 jobs:
@@ -28,3 +28,11 @@ jobs:
         run: |
           python3 scripts/sync_backstage_template.py
           git diff --exit-code -- services/backstage/templates/ml-project/skeleton
+      - uses: azure/setup-kubectl@v4
+        with:
+          version: v1.37.0
+      - name: Validate application request and deployment golden path
+        working-directory: .
+        run: |
+          python3 -m pip install PyYAML==6.0.3 Jinja2==3.1.6
+          python3 -m unittest scripts.tests.test_ai_application_template -v

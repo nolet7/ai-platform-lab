@@ -16,3 +16,11 @@ it('permits ML project registration but not for non-members', async () => {
   expect((await policy.handle(request('catalog.location.create'), user([]))).result).toBe(AuthorizeResult.DENY);
   expect((await policy.handle(request('catalog.location.create'), user(['group:default/tax-ml-team']))).result).toBe(AuthorizeResult.ALLOW);
 });
+
+it('permits developers to request and register applications but not manage templates', async () => {
+  const developer = user(['group:default/developers']);
+  for (const name of ['scaffolder.task.create', 'catalog.entity.create', 'catalog.location.create']) {
+    expect((await policy.handle(request(name), developer)).result).toBe(AuthorizeResult.ALLOW);
+  }
+  expect((await policy.handle(request('scaffolder.template.management'), developer)).result).toBe(AuthorizeResult.DENY);
+});
