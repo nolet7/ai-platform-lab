@@ -1,5 +1,10 @@
 # Local deployment demo
 
+For the timed executive narrative, architecture explanation, and an offline
+fallback when the cluster is unavailable, use the
+[five-minute AI platform interview demo](interview-demo.md). This page retains
+the detailed local execution notes.
+
 Open `https://api.ai-platform.local/portal/` in a browser and sign in
 with the demo accounts in
 `C:\Users\user\Downloads\ai-platform-demo-credentials.txt`.
