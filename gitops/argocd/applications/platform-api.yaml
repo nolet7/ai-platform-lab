@@ -13,7 +13,7 @@ spec:
 
   source:
     repoURL: https://github.com/nolet7/ai-platform-lab.git
-    targetRevision: main
+    targetRevision: c1587cadf825c047f0db97c8f58b67695689e26c
     path: gitops/platform/control-api
 
   destination:
