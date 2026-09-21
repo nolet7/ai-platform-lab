@@ -31,6 +31,11 @@ The [architecture reflection review](docs/architecture-reflection-review.md) rec
 evidence and remaining gaps. Distributed CAIPE tracing, automated rollback,
 and some security and failure-path audits remain open.
 
+For an interview-ready explanation of the complete developer and deployment
+lifecycle, use the [five-minute executive demo](docs/interview-demo.md). It
+includes a live-cluster route, an offline evidence fallback, a timed talk track,
+and explicit production boundaries.
+
 ## Use cases
 
 | User or team | Use case | Platform outcome |
